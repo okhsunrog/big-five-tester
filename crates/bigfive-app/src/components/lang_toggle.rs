@@ -2,7 +2,7 @@
 
 use leptos::prelude::*;
 
-use crate::i18n::{use_i18n, Locale};
+use crate::i18n::{Locale, use_i18n};
 
 /// Get the native name of a locale
 fn locale_name(locale: Locale) -> &'static str {
@@ -34,10 +34,7 @@ fn LocaleOption(
             }
         >
             <span class="flex items-center gap-2">
-                <Show
-                    when=move || is_current.get()
-                    fallback=|| view! { <span class="w-4" /> }
-                >
+                <Show when=move || is_current.get() fallback=|| view! { <span class="w-4" /> }>
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path
                             fill-rule="evenodd"
@@ -112,7 +109,6 @@ pub fn LangToggle() -> AnyView {
     view! {
         <div class="relative">
             {dropdown_button}
-
             // Dropdown menu
             <Show when=move || is_open.get()>
                 // Backdrop to close on click outside
