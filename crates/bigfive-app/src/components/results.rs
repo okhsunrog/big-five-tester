@@ -19,7 +19,11 @@ const STORAGE_KEY_CONTEXT: &str = "bigfive_user_context";
 
 /// Polling interval in milliseconds
 #[cfg(target_arch = "wasm32")]
-const POLL_INTERVAL_MS: i32 = 3000;
+const POLL_INTERVAL_MS: u32 = 3000;
+
+/// Maximum number of poll attempts (3 minutes total with 3s interval)
+#[cfg(target_arch = "wasm32")]
+const MAX_POLL_ATTEMPTS: u32 = 60;
 
 /// Status of a background analysis job (shared between server and client)
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -235,9 +239,20 @@ pub fn ResultsPage() -> impl IntoView {
             };
 
             // Start the analysis job
+            #[cfg(target_arch = "wasm32")]
+            web_sys::console::log_1(
+                &format!("Calling start_analysis for lang={}", lang_str).into(),
+            );
+
             let job_id = match start_analysis(prof, lang_str.to_string(), context_opt).await {
-                Ok(id) => id,
+                Ok(id) => {
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::log_1(&format!("Got job_id: {}", id).into());
+                    id
+                }
                 Err(e) => {
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::log_1(&format!("start_analysis error: {}", e).into());
                     set_ai_error.set(Some(e.to_string()));
                     set_ai_loading.set(false);
                     return;
@@ -245,28 +260,61 @@ pub fn ResultsPage() -> impl IntoView {
             };
 
             // Poll for results
+            #[cfg(target_arch = "wasm32")]
+            {
+                web_sys::console::log_1(&format!("Starting poll for job {}", job_id).into());
+            }
+
+            #[cfg(target_arch = "wasm32")]
+            let mut poll_count: u32 = 0;
+
             loop {
                 // Wait before polling
                 #[cfg(target_arch = "wasm32")]
                 {
-                    gloo_timers::future::TimeoutFuture::new(POLL_INTERVAL_MS as u32).await;
+                    gloo_timers::future::TimeoutFuture::new(POLL_INTERVAL_MS).await;
+                    poll_count += 1;
                 }
+
+                // Check for timeout
+                #[cfg(target_arch = "wasm32")]
+                if poll_count >= MAX_POLL_ATTEMPTS {
+                    web_sys::console::log_1(&"Poll timeout reached".into());
+                    set_ai_error.set(Some("Analysis timed out. Please try again.".to_string()));
+                    set_ai_loading.set(false);
+                    break;
+                }
+
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(
+                    &format!("Polling attempt {} for job {}", poll_count, job_id).into(),
+                );
 
                 match get_analysis_status(job_id.clone()).await {
                     Ok(AnalysisStatus::Complete(description)) => {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(
+                            &format!("Got complete result, len={}", description.len()).into(),
+                        );
                         set_ai_description.set(Some(description));
                         set_ai_loading.set(false);
                         break;
                     }
                     Ok(AnalysisStatus::Error(err)) => {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(&format!("Got error: {}", err).into());
                         set_ai_error.set(Some(err));
                         set_ai_loading.set(false);
                         break;
                     }
                     Ok(AnalysisStatus::Pending) => {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(&"Status: pending".into());
                         // Continue polling
                     }
                     Err(e) => {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(&format!("Poll error: {}", e).into());
                         set_ai_error.set(Some(e.to_string()));
                         set_ai_loading.set(false);
                         break;
