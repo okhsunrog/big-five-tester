@@ -36,6 +36,31 @@ pub enum AnalysisStatus {
     Error(String),
 }
 
+/// Model info for client (subset of ModelPreset)
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ClientModelInfo {
+    pub id: String,
+    pub display_name: String,
+    pub default: bool,
+}
+
+/// Get available model presets for the client.
+#[server]
+pub async fn get_available_models() -> Result<Vec<ClientModelInfo>, ServerFnError> {
+    use crate::config::get_config;
+
+    let config = get_config().map_err(|e| ServerFnError::new(e.to_string()))?;
+    Ok(config
+        .models
+        .iter()
+        .map(|m| ClientModelInfo {
+            id: m.id.clone(),
+            display_name: m.display_name.clone(),
+            default: m.default,
+        })
+        .collect())
+}
+
 /// Convert markdown text to HTML
 fn markdown_to_html(markdown: &str) -> String {
     let mut options = Options::empty();
@@ -55,6 +80,7 @@ pub async fn start_analysis(
     profile: PersonalityProfile,
     lang: String,
     user_context: Option<String>,
+    model_id: String,
 ) -> Result<String, ServerFnError> {
     use crate::jobs::{self, JobStatus};
 
@@ -68,6 +94,7 @@ pub async fn start_analysis(
     tracing::info!(
         job_id = %job_id,
         lang = %lang,
+        model_id = %model_id,
         has_context = user_context.is_some(),
         "Starting background analysis job"
     );
@@ -82,7 +109,7 @@ pub async fn start_analysis(
         let start = std::time::Instant::now();
         jobs::update_job_status(&job_id_clone, JobStatus::Processing);
 
-        match ai::generate_analysis(&profile, user_context.as_deref(), &lang).await {
+        match ai::generate_analysis(&model_id, &profile, user_context.as_deref(), &lang).await {
             Ok(description) => {
                 tracing::info!(
                     job_id = %job_id_clone,
@@ -205,6 +232,10 @@ pub fn ResultsPage() -> impl IntoView {
     // User context for AI (optional self-description)
     let (user_context, set_user_context) = signal(String::new());
 
+    // Model selection state
+    let (available_models, set_available_models) = signal::<Vec<ClientModelInfo>>(Vec::new());
+    let (selected_model, set_selected_model) = signal::<Option<String>>(None);
+
     // Load profile and context from localStorage after hydration
     Effect::new(move |_| {
         let loaded = load_profile();
@@ -218,9 +249,37 @@ pub fn ResultsPage() -> impl IntoView {
         }
     });
 
+    // Load available models from server
+    Effect::new(move |_| {
+        spawn_local(async move {
+            match get_available_models().await {
+                Ok(models) => {
+                    // Find default model
+                    let default_id = models
+                        .iter()
+                        .find(|m| m.default)
+                        .or_else(|| models.first())
+                        .map(|m| m.id.clone());
+                    set_available_models.set(models);
+                    if let Some(id) = default_id {
+                        set_selected_model.set(Some(id));
+                    }
+                }
+                Err(_e) => {
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::error_1(&format!("Failed to load models: {}", _e).into());
+                }
+            }
+        });
+    });
+
     // Request AI description with polling
     let request_ai = move |_| {
         let Some(prof) = profile.get() else { return };
+        let Some(model_id) = selected_model.get() else {
+            set_ai_error.set(Some("No model selected".to_string()));
+            return;
+        };
         let locale = i18n.get_locale();
         let context = user_context.get();
         let context_opt = if context.trim().is_empty() {
@@ -241,10 +300,10 @@ pub fn ResultsPage() -> impl IntoView {
             // Start the analysis job
             #[cfg(target_arch = "wasm32")]
             web_sys::console::log_1(
-                &format!("Calling start_analysis for lang={}", lang_str).into(),
+                &format!("Calling start_analysis for lang={}, model={}", lang_str, model_id).into(),
             );
 
-            let job_id = match start_analysis(prof, lang_str.to_string(), context_opt).await {
+            let job_id = match start_analysis(prof, lang_str.to_string(), context_opt, model_id).await {
                 Ok(id) => {
                     #[cfg(target_arch = "wasm32")]
                     web_sys::console::log_1(&format!("Got job_id: {}", id).into());
@@ -609,6 +668,36 @@ pub fn ResultsPage() -> impl IntoView {
                                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                                 {t!(i18n, results_context_hint)}
                                             </p>
+                                        </div>
+
+                                        // Model selector
+                                        <div class="mb-6">
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                {t!(i18n, results_model_select)}
+                                            </label>
+                                            <select
+                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 dark:text-gray-200"
+                                                on:change=move |ev| {
+                                                    let value = event_target_value(&ev);
+                                                    set_selected_model.set(Some(value));
+                                                }
+                                            >
+                                                {move || {
+                                                    let models = available_models.get();
+                                                    let current = selected_model.get();
+                                                    models
+                                                        .iter()
+                                                        .map(|m| {
+                                                            let is_selected = current.as_ref() == Some(&m.id);
+                                                            view! {
+                                                                <option value=m.id.clone() selected=is_selected>
+                                                                    {m.display_name.clone()}
+                                                                </option>
+                                                            }
+                                                        })
+                                                        .collect_view()
+                                                }}
+                                            </select>
                                         </div>
 
                                         <button

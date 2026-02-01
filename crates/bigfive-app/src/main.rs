@@ -38,7 +38,18 @@ async fn main() {
     match get_config() {
         Ok(config) => {
             info!("AI Configuration loaded:");
-            info!("  Analysis model: {}", config.analysis.model);
+            info!("  Available models:");
+            for preset in &config.models {
+                let default_marker = if preset.default { " (default)" } else { "" };
+                info!(
+                    "    - {} [{}]: {}{}, source_lang={:?}",
+                    preset.display_name,
+                    preset.id,
+                    preset.model,
+                    default_marker,
+                    preset.source_lang
+                );
+            }
             if let Some(ref safeguard) = config.safeguard {
                 if safeguard.enabled {
                     info!("  Safeguard: {} (enabled)", safeguard.model);
@@ -47,19 +58,6 @@ async fn main() {
                 }
             } else {
                 info!("  Safeguard: not configured");
-            }
-            if let Some(ref translation) = config.translation {
-                if translation.enabled {
-                    info!(
-                        "  Translation: {} -> target (via {})",
-                        translation.source_language.code(),
-                        translation.model
-                    );
-                } else {
-                    info!("  Translation: disabled");
-                }
-            } else {
-                info!("  Translation: not configured");
             }
         }
         Err(e) => {

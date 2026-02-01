@@ -6,7 +6,7 @@
 use std::path::PathBuf;
 
 use once_cell::sync::OnceCell;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// Global config instance (loaded once on first access)
@@ -59,49 +59,63 @@ pub enum ConfigError {
 /// Root AI configuration structure.
 #[derive(Debug, Deserialize)]
 pub struct AiConfig {
-    /// Default API configuration (used by analysis, inherited by others)
-    pub api: ApiConfig,
-
-    /// Optional safeguard configuration for prompt injection protection
+    /// Optional safeguard configuration for prompt injection protection (shared for all models)
     #[serde(default)]
     pub safeguard: Option<SafeguardConfig>,
 
-    /// Main analysis configuration
-    pub analysis: AnalysisConfig,
-
-    /// Optional translation configuration for two-step pipeline
-    #[serde(default)]
-    pub translation: Option<TranslationConfig>,
+    /// Available model presets
+    pub models: Vec<ModelPreset>,
 }
 
 impl AiConfig {
     /// Validate the configuration.
     fn validate(&self) -> Result<(), ConfigError> {
-        // Validate main API
-        self.api.validate("api")?;
+        // Must have at least one model
+        if self.models.is_empty() {
+            return Err(ConfigError::Validation(
+                "At least one model preset is required".to_string(),
+            ));
+        }
 
         // Validate safeguard API if present
         if let Some(ref safeguard) = self.safeguard
             && safeguard.enabled
-            && let Some(ref api) = safeguard.api
         {
-            api.validate("safeguard.api")?;
+            safeguard.api.validate("safeguard.api")?;
         }
 
-        // Validate translation API if present
-        if let Some(ref translation) = self.translation
-            && translation.enabled
-            && let Some(ref api) = translation.api
-        {
-            api.validate("translation.api")?;
+        // Validate each model preset
+        for (i, preset) in self.models.iter().enumerate() {
+            preset.validate(&format!("models[{}]", i))?;
+        }
+
+        // Check that exactly one model is marked as default (or none, then first is default)
+        let default_count = self.models.iter().filter(|m| m.default).count();
+        if default_count > 1 {
+            return Err(ConfigError::Validation(
+                "Only one model can be marked as default".to_string(),
+            ));
         }
 
         Ok(())
     }
+
+    /// Get the default model preset.
+    pub fn default_model(&self) -> &ModelPreset {
+        self.models
+            .iter()
+            .find(|m| m.default)
+            .unwrap_or_else(|| self.models.first().unwrap())
+    }
+
+    /// Get a model preset by ID.
+    pub fn get_model(&self, id: &str) -> Option<&ModelPreset> {
+        self.models.iter().find(|m| m.id == id)
+    }
 }
 
 /// API configuration for a provider.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ApiConfig {
     /// API provider type
     pub provider: Provider,
@@ -136,7 +150,7 @@ impl ApiConfig {
 }
 
 /// API provider type.
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Provider {
     /// Anthropic API (Claude models)
@@ -161,31 +175,58 @@ pub struct SafeguardConfig {
     #[serde(default = "default_safeguard_max_tokens")]
     pub max_tokens: u32,
 
-    /// Optional API override (if None, uses main [api])
-    pub api: Option<ApiConfig>,
+    /// API configuration for safeguard
+    pub api: ApiConfig,
 }
 
-/// Main analysis configuration.
-#[derive(Debug, Deserialize)]
-pub struct AnalysisConfig {
-    /// Model to use for personality analysis
+/// Model preset configuration.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ModelPreset {
+    /// Unique identifier for this preset
+    pub id: String,
+
+    /// Display name shown in UI
+    pub display_name: String,
+
+    /// Model identifier (e.g., "claude-opus-4-5-20251101")
     pub model: String,
+
+    /// Source language for analysis (model's "native" language)
+    pub source_lang: SourceLanguage,
 
     /// Maximum tokens for analysis response
     #[serde(default = "default_analysis_max_tokens")]
     pub max_tokens: u32,
+
+    /// Whether this is the default model
+    #[serde(default)]
+    pub default: bool,
+
+    /// API configuration for this model
+    pub api: ApiConfig,
+
+    /// Optional translation configuration
+    pub translation: Option<TranslationConfig>,
+}
+
+impl ModelPreset {
+    /// Validate the model preset.
+    fn validate(&self, section: &str) -> Result<(), ConfigError> {
+        self.api.validate(&format!("{}.api", section))?;
+
+        if let Some(ref translation) = self.translation {
+            translation
+                .api
+                .validate(&format!("{}.translation.api", section))?;
+        }
+
+        Ok(())
+    }
 }
 
 /// Translation configuration for two-step pipeline.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TranslationConfig {
-    /// Whether translation is enabled
-    #[serde(default)]
-    pub enabled: bool,
-
-    /// Source language for analysis (model's "native" language)
-    pub source_language: SourceLanguage,
-
     /// Model to use for translation
     pub model: String,
 
@@ -193,12 +234,12 @@ pub struct TranslationConfig {
     #[serde(default = "default_translation_max_tokens")]
     pub max_tokens: u32,
 
-    /// Optional API override (if None, uses main [api])
-    pub api: Option<ApiConfig>,
+    /// API configuration for translation
+    pub api: ApiConfig,
 }
 
 /// Source language for analysis prompt.
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum SourceLanguage {
     /// English
@@ -225,6 +266,24 @@ impl SourceLanguage {
             Self::En => "English",
             Self::Ru => "Russian",
             Self::Zh => "Chinese",
+        }
+    }
+}
+
+/// Model info for client (subset of ModelPreset)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelInfo {
+    pub id: String,
+    pub display_name: String,
+    pub default: bool,
+}
+
+impl From<&ModelPreset> for ModelInfo {
+    fn from(preset: &ModelPreset) -> Self {
+        Self {
+            id: preset.id.clone(),
+            display_name: preset.display_name.clone(),
+            default: preset.default,
         }
     }
 }

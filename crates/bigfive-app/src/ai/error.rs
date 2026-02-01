@@ -30,4 +30,8 @@ pub enum AnalysisError {
         "Your input was flagged as potentially unsafe. Please provide only personal context information."
     )]
     UnsafeInput,
+
+    /// Invalid model ID
+    #[error("Invalid model: {0}")]
+    InvalidModel(String),
 }

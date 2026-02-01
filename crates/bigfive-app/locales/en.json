@@ -39,6 +39,7 @@
   "results_context_optional": "(optional)",
   "results_context_placeholder": "A few sentences about your life, work, hobbies, or anything that helps paint a fuller picture...",
   "results_context_hint": "Adding context helps the AI provide more personalized and relevant insights.",
+  "results_model_select": "Analysis Model",
   "results_retake": "Retake Test",
   "results_home": "Back to Home",
 
