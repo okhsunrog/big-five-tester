@@ -45,5 +45,46 @@
 
   "level_low": "Низкий",
   "level_neutral": "Средний",
-  "level_high": "Высокий"
+  "level_high": "Высокий",
+
+  "domain_neuroticism": "Нейротизм",
+  "domain_extraversion": "Экстраверсия",
+  "domain_openness": "Открытость опыту",
+  "domain_agreeableness": "Доброжелательность",
+  "domain_conscientiousness": "Добросовестность",
+
+  "facet_anxiety": "Тревожность",
+  "facet_anger": "Гнев",
+  "facet_depression": "Депрессия",
+  "facet_self_consciousness": "Застенчивость",
+  "facet_immoderation": "Невоздержанность",
+  "facet_vulnerability": "Уязвимость",
+
+  "facet_friendliness": "Дружелюбие",
+  "facet_gregariousness": "Общительность",
+  "facet_assertiveness": "Напористость",
+  "facet_activity_level": "Активность",
+  "facet_excitement_seeking": "Поиск острых ощущений",
+  "facet_cheerfulness": "Жизнерадостность",
+
+  "facet_imagination": "Воображение",
+  "facet_artistic_interests": "Художественные интересы",
+  "facet_emotionality": "Эмоциональность",
+  "facet_adventurousness": "Авантюризм",
+  "facet_intellect": "Интеллект",
+  "facet_liberalism": "Либерализм",
+
+  "facet_trust": "Доверие",
+  "facet_morality": "Нравственность",
+  "facet_altruism": "Альтруизм",
+  "facet_cooperation": "Сотрудничество",
+  "facet_modesty": "Скромность",
+  "facet_sympathy": "Сочувствие",
+
+  "facet_self_efficacy": "Самоэффективность",
+  "facet_orderliness": "Упорядоченность",
+  "facet_dutifulness": "Чувство долга",
+  "facet_achievement_striving": "Стремление к достижениям",
+  "facet_self_discipline": "Самодисциплина",
+  "facet_cautiousness": "Осторожность"
 }

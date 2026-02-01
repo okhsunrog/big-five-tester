@@ -1,6 +1,6 @@
 //! Results page component with visualization and AI analysis.
 
-use bigfive::{Domain, PersonalityProfile, ScoreLevel};
+use bigfive::{Domain, Facet, PersonalityProfile, ScoreLevel};
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_i18n::{t, t_string};
@@ -414,6 +414,58 @@ pub fn ResultsPage() -> impl IntoView {
         }
     };
 
+    // Get localized domain name
+    let domain_name = move |domain: Domain| -> String {
+        match domain {
+            Domain::Neuroticism => t_string!(i18n, domain_neuroticism).to_string(),
+            Domain::Extraversion => t_string!(i18n, domain_extraversion).to_string(),
+            Domain::Openness => t_string!(i18n, domain_openness).to_string(),
+            Domain::Agreeableness => t_string!(i18n, domain_agreeableness).to_string(),
+            Domain::Conscientiousness => t_string!(i18n, domain_conscientiousness).to_string(),
+        }
+    };
+
+    // Get localized facet name
+    let facet_name = move |facet: Facet| -> String {
+        match facet {
+            // Neuroticism
+            Facet::Anxiety => t_string!(i18n, facet_anxiety).to_string(),
+            Facet::Anger => t_string!(i18n, facet_anger).to_string(),
+            Facet::Depression => t_string!(i18n, facet_depression).to_string(),
+            Facet::SelfConsciousness => t_string!(i18n, facet_self_consciousness).to_string(),
+            Facet::Immoderation => t_string!(i18n, facet_immoderation).to_string(),
+            Facet::Vulnerability => t_string!(i18n, facet_vulnerability).to_string(),
+            // Extraversion
+            Facet::Friendliness => t_string!(i18n, facet_friendliness).to_string(),
+            Facet::Gregariousness => t_string!(i18n, facet_gregariousness).to_string(),
+            Facet::Assertiveness => t_string!(i18n, facet_assertiveness).to_string(),
+            Facet::ActivityLevel => t_string!(i18n, facet_activity_level).to_string(),
+            Facet::ExcitementSeeking => t_string!(i18n, facet_excitement_seeking).to_string(),
+            Facet::Cheerfulness => t_string!(i18n, facet_cheerfulness).to_string(),
+            // Openness
+            Facet::Imagination => t_string!(i18n, facet_imagination).to_string(),
+            Facet::ArtisticInterests => t_string!(i18n, facet_artistic_interests).to_string(),
+            Facet::Emotionality => t_string!(i18n, facet_emotionality).to_string(),
+            Facet::Adventurousness => t_string!(i18n, facet_adventurousness).to_string(),
+            Facet::Intellect => t_string!(i18n, facet_intellect).to_string(),
+            Facet::Liberalism => t_string!(i18n, facet_liberalism).to_string(),
+            // Agreeableness
+            Facet::Trust => t_string!(i18n, facet_trust).to_string(),
+            Facet::Morality => t_string!(i18n, facet_morality).to_string(),
+            Facet::Altruism => t_string!(i18n, facet_altruism).to_string(),
+            Facet::Cooperation => t_string!(i18n, facet_cooperation).to_string(),
+            Facet::Modesty => t_string!(i18n, facet_modesty).to_string(),
+            Facet::Sympathy => t_string!(i18n, facet_sympathy).to_string(),
+            // Conscientiousness
+            Facet::SelfEfficacy => t_string!(i18n, facet_self_efficacy).to_string(),
+            Facet::Orderliness => t_string!(i18n, facet_orderliness).to_string(),
+            Facet::Dutifulness => t_string!(i18n, facet_dutifulness).to_string(),
+            Facet::AchievementStriving => t_string!(i18n, facet_achievement_striving).to_string(),
+            Facet::SelfDiscipline => t_string!(i18n, facet_self_discipline).to_string(),
+            Facet::Cautiousness => t_string!(i18n, facet_cautiousness).to_string(),
+        }
+    };
+
     view! {
         <div class="max-w-4xl mx-auto px-4 py-8">
             // Header with language and theme toggles
@@ -456,7 +508,7 @@ pub fn ResultsPage() -> impl IntoView {
                                                 <div class="flex-1">
                                                     <div class="flex items-center justify-between mb-2">
                                                         <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                                                            {domain.name()}
+                                                            {domain_name(domain)}
                                                         </h3>
                                                         <span class="text-sm text-gray-500 dark:text-gray-400">
                                                             {format!("{} ({})", raw, level_text(level))}
@@ -505,7 +557,7 @@ pub fn ResultsPage() -> impl IntoView {
                                                     {facets
                                                         .iter()
                                                         .map(|facet_score| {
-                                                            let facet_name = facet_score.facet.name();
+                                                            let f_name = facet_name(facet_score.facet);
                                                             let facet_raw = facet_score.raw;
                                                             let facet_level = facet_score.level;
                                                             let facet_pct = facet_score.percentage();
@@ -514,7 +566,7 @@ pub fn ResultsPage() -> impl IntoView {
                                                                 <div>
                                                                     <div class="flex justify-between text-sm mb-1">
                                                                         <span class="text-gray-600 dark:text-gray-300">
-                                                                            {facet_name}
+                                                                            {f_name}
                                                                         </span>
                                                                         <span class="text-gray-500 dark:text-gray-400">
                                                                             {format!("{} ({})", facet_raw, level_text(facet_level))}

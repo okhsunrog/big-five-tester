@@ -45,5 +45,46 @@
 
   "level_low": "Low",
   "level_neutral": "Average",
-  "level_high": "High"
+  "level_high": "High",
+
+  "domain_neuroticism": "Neuroticism",
+  "domain_extraversion": "Extraversion",
+  "domain_openness": "Openness to Experience",
+  "domain_agreeableness": "Agreeableness",
+  "domain_conscientiousness": "Conscientiousness",
+
+  "facet_anxiety": "Anxiety",
+  "facet_anger": "Anger",
+  "facet_depression": "Depression",
+  "facet_self_consciousness": "Self-Consciousness",
+  "facet_immoderation": "Immoderation",
+  "facet_vulnerability": "Vulnerability",
+
+  "facet_friendliness": "Friendliness",
+  "facet_gregariousness": "Gregariousness",
+  "facet_assertiveness": "Assertiveness",
+  "facet_activity_level": "Activity Level",
+  "facet_excitement_seeking": "Excitement-Seeking",
+  "facet_cheerfulness": "Cheerfulness",
+
+  "facet_imagination": "Imagination",
+  "facet_artistic_interests": "Artistic Interests",
+  "facet_emotionality": "Emotionality",
+  "facet_adventurousness": "Adventurousness",
+  "facet_intellect": "Intellect",
+  "facet_liberalism": "Liberalism",
+
+  "facet_trust": "Trust",
+  "facet_morality": "Morality",
+  "facet_altruism": "Altruism",
+  "facet_cooperation": "Cooperation",
+  "facet_modesty": "Modesty",
+  "facet_sympathy": "Sympathy",
+
+  "facet_self_efficacy": "Self-Efficacy",
+  "facet_orderliness": "Orderliness",
+  "facet_dutifulness": "Dutifulness",
+  "facet_achievement_striving": "Achievement-Striving",
+  "facet_self_discipline": "Self-Discipline",
+  "facet_cautiousness": "Cautiousness"
 }
