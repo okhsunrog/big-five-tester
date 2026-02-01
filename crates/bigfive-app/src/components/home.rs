@@ -8,7 +8,7 @@ use crate::i18n::use_i18n;
 
 /// Domain trait with description.
 #[component]
-fn DomainItem(name: &'static str, description: impl IntoView + 'static) -> impl IntoView {
+fn DomainItem(name: &'static str, description: &'static str) -> impl IntoView {
     let color = match name {
         "Neuroticism" => "bg-red-500",
         "Extraversion" => "bg-yellow-500",
@@ -29,42 +29,76 @@ fn DomainItem(name: &'static str, description: impl IntoView + 'static) -> impl 
     }
 }
 
+/// Domain list component - extracted to reduce type nesting.
+#[component]
+fn DomainList() -> impl IntoView {
+    let i18n = use_i18n();
+
+    // Get translations once per render (reactive via locale signal)
+    let domains = Memo::new(move |_| {
+        vec![
+            ("Neuroticism", i18n.t("domain_n_desc")),
+            ("Extraversion", i18n.t("domain_e_desc")),
+            ("Openness", i18n.t("domain_o_desc")),
+            ("Agreeableness", i18n.t("domain_a_desc")),
+            ("Conscientiousness", i18n.t("domain_c_desc")),
+        ]
+    });
+
+    view! {
+        <div class="space-y-4">
+            <For each=move || domains.get() key=|(name, _)| *name let:item>
+                <DomainItem name=item.0 description=item.1 />
+            </For>
+        </div>
+    }
+}
+
+/// Stats pills component.
+#[component]
+fn StatsPills() -> impl IntoView {
+    let i18n = use_i18n();
+
+    view! {
+        <div class="flex flex-wrap gap-3 justify-center mb-8">
+            <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium">
+                {move || i18n.t("home_questions_count")}
+            </span>
+            <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
+                {move || i18n.t("home_time_estimate")}
+            </span>
+        </div>
+    }
+}
+
+/// Header with title and toggles.
+#[component]
+fn PageHeader() -> impl IntoView {
+    let i18n = use_i18n();
+
+    view! {
+        <header class="flex justify-between items-start mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{move || i18n.t("title")}</h1>
+            <div class="flex items-center gap-3">
+                <LangToggle />
+                <ThemeToggle />
+            </div>
+        </header>
+    }
+}
+
 /// Home page with landing section.
 #[component]
 pub fn HomePage() -> impl IntoView {
     let i18n = use_i18n();
 
-    // Domain descriptions
-    let domain_n_desc = move || i18n.t("domain_n_desc");
-    let domain_e_desc = move || i18n.t("domain_e_desc");
-    let domain_o_desc = move || i18n.t("domain_o_desc");
-    let domain_a_desc = move || i18n.t("domain_a_desc");
-    let domain_c_desc = move || i18n.t("domain_c_desc");
-
     view! {
         <div class="max-w-4xl mx-auto px-4 py-8">
-            // Stats pills at the top
-            <div class="flex flex-wrap gap-3 justify-center mb-8">
-                <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium">
-                    {move || i18n.t("home_questions_count")}
-                </span>
-                <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
-                    {move || i18n.t("home_time_estimate")}
-                </span>
-            </div>
+            <StatsPills />
 
-            // Main content card
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 transition-colors duration-300">
-                // Header with title and toggles
-                <header class="flex justify-between items-start mb-6">
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{move || i18n.t("title")}</h1>
-                    <div class="flex items-center gap-3">
-                        <LangToggle />
-                        <ThemeToggle />
-                    </div>
-                </header>
+                <PageHeader />
 
-                // Subtitle and description
                 <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
                     {move || i18n.t("home_subtitle")}
                 </h2>
@@ -72,21 +106,13 @@ pub fn HomePage() -> impl IntoView {
                     {move || i18n.t("home_description")}
                 </p>
 
-                // Domain traits
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
                         {move || i18n.t("home_what_measured")}
                     </h3>
-                    <div class="space-y-4">
-                        <DomainItem name="Neuroticism" description=domain_n_desc />
-                        <DomainItem name="Extraversion" description=domain_e_desc />
-                        <DomainItem name="Openness" description=domain_o_desc />
-                        <DomainItem name="Agreeableness" description=domain_a_desc />
-                        <DomainItem name="Conscientiousness" description=domain_c_desc />
-                    </div>
+                    <DomainList />
                 </div>
 
-                // Start button
                 <A
                     href="test"
                     attr:class="inline-block w-full sm:w-auto text-center px-8 py-3 bg-indigo-600 dark:bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"

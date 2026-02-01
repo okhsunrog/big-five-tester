@@ -1,6 +1,6 @@
 //! Big Five Personality Test web application.
 
-#![recursion_limit = "1024"]
+#![recursion_limit = "2048"]
 #![allow(clippy::module_inception)]
 
 pub mod app;
