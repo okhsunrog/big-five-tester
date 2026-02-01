@@ -300,23 +300,28 @@ pub fn ResultsPage() -> impl IntoView {
             // Start the analysis job
             #[cfg(target_arch = "wasm32")]
             web_sys::console::log_1(
-                &format!("Calling start_analysis for lang={}, model={}", lang_str, model_id).into(),
+                &format!(
+                    "Calling start_analysis for lang={}, model={}",
+                    lang_str, model_id
+                )
+                .into(),
             );
 
-            let job_id = match start_analysis(prof, lang_str.to_string(), context_opt, model_id).await {
-                Ok(id) => {
-                    #[cfg(target_arch = "wasm32")]
-                    web_sys::console::log_1(&format!("Got job_id: {}", id).into());
-                    id
-                }
-                Err(e) => {
-                    #[cfg(target_arch = "wasm32")]
-                    web_sys::console::log_1(&format!("start_analysis error: {}", e).into());
-                    set_ai_error.set(Some(e.to_string()));
-                    set_ai_loading.set(false);
-                    return;
-                }
-            };
+            let job_id =
+                match start_analysis(prof, lang_str.to_string(), context_opt, model_id).await {
+                    Ok(id) => {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(&format!("Got job_id: {}", id).into());
+                        id
+                    }
+                    Err(e) => {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(&format!("start_analysis error: {}", e).into());
+                        set_ai_error.set(Some(e.to_string()));
+                        set_ai_loading.set(false);
+                        return;
+                    }
+                };
 
             // Poll for results
             #[cfg(target_arch = "wasm32")]
