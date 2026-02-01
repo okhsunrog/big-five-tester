@@ -36,14 +36,13 @@ api_url = "https://openrouter.ai/api/v1/chat/completions"
 # - api: API configuration for this model
 # - translation: Optional translation settings (if source_lang != interface language)
 
-# --- DeepSeek V3.2 (Chinese source, DEFAULT) ---
+# --- DeepSeek V3.2 (Chinese source) ---
 [[models]]
 id = "deepseek-v3.2"
 display_name = "DeepSeek V3.2"
 model = "deepseek/deepseek-v3.2"
 source_lang = "zh"
 max_tokens = 8192
-default = true
 
 [models.api]
 provider = "openai"
@@ -59,13 +58,14 @@ provider = "openai"
 api_key_env = "OPENROUTER_API_KEY"
 api_url = "https://openrouter.ai/api/v1/chat/completions"
 
-# --- Claude Opus 4.5 (English source, via Anthropic API) ---
+# --- Claude Opus 4.5 (English source, via Anthropic API, DEFAULT) ---
 [[models]]
 id = "claude-opus-4.5"
 display_name = "Claude Opus 4.5"
 model = "claude-opus-4-5-20251101"
 source_lang = "en"
 max_tokens = 8192
+default = true
 
 [models.api]
 provider = "anthropic"
