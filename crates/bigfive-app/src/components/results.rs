@@ -232,9 +232,28 @@ pub fn ResultsPage() -> impl IntoView {
     // User context for AI (optional self-description)
     let (user_context, set_user_context) = signal(String::new());
 
-    // Model selection state
-    let (available_models, set_available_models) = signal::<Vec<ClientModelInfo>>(Vec::new());
+    // Load available models from server (Resource runs on both server and client)
+    let models_resource =
+        Resource::new(|| (), |_| async move { get_available_models().await.ok() });
+
+    // Selected model state
     let (selected_model, set_selected_model) = signal::<Option<String>>(None);
+
+    // Set default model when models load
+    Effect::new(move |_| {
+        if let Some(Some(models)) = models_resource.get()
+            && selected_model.get().is_none()
+        {
+            let default_id = models
+                .iter()
+                .find(|m| m.default)
+                .or_else(|| models.first())
+                .map(|m| m.id.clone());
+            if let Some(id) = default_id {
+                set_selected_model.set(Some(id));
+            }
+        }
+    });
 
     // Load profile and context from localStorage after hydration
     Effect::new(move |_| {
@@ -247,30 +266,6 @@ pub fn ResultsPage() -> impl IntoView {
         if let Some(ctx) = load_context() {
             set_user_context.set(ctx);
         }
-    });
-
-    // Load available models from server
-    Effect::new(move |_| {
-        spawn_local(async move {
-            match get_available_models().await {
-                Ok(models) => {
-                    // Find default model
-                    let default_id = models
-                        .iter()
-                        .find(|m| m.default)
-                        .or_else(|| models.first())
-                        .map(|m| m.id.clone());
-                    set_available_models.set(models);
-                    if let Some(id) = default_id {
-                        set_selected_model.set(Some(id));
-                    }
-                }
-                Err(_e) => {
-                    #[cfg(target_arch = "wasm32")]
-                    web_sys::console::error_1(&format!("Failed to load models: {}", _e).into());
-                }
-            }
-        });
     });
 
     // Request AI description with polling
@@ -740,7 +735,7 @@ pub fn ResultsPage() -> impl IntoView {
                                                 }
                                             >
                                                 {move || {
-                                                    let models = available_models.get();
+                                                    let models = models_resource.get().flatten().unwrap_or_default();
                                                     let current = selected_model.get();
                                                     models
                                                         .iter()
