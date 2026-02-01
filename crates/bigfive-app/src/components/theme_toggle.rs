@@ -59,7 +59,7 @@ fn load_theme_preference() -> Option<String> {
 
 /// Theme toggle component that cycles through auto/light/dark modes.
 #[component]
-pub fn ThemeToggle() -> impl IntoView {
+pub fn ThemeToggle() -> AnyView {
     // "auto", "light", or "dark"
     let (mode, set_mode) = signal("auto".to_string());
 
@@ -128,4 +128,5 @@ pub fn ThemeToggle() -> impl IntoView {
             }}
         </button>
     }
+    .into_any()
 }

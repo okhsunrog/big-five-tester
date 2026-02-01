@@ -7,10 +7,64 @@ use leptos_router::components::A;
 use crate::components::{LangToggle, ThemeToggle};
 use crate::i18n::use_i18n;
 
+/// Domain trait item component to reduce type nesting
+#[component]
+fn DomainItem(name: &'static str, description: AnyView) -> impl IntoView {
+    view! {
+        <li class="flex items-start">
+            <span class="text-indigo-500 dark:text-indigo-400 mr-2">"•"</span>
+            <span>
+                <strong class="text-gray-800 dark:text-gray-100">{name}</strong>
+                " - "
+                {description}
+            </span>
+        </li>
+    }
+}
+
 /// Home page with test description and start button.
 #[component]
 pub fn HomePage() -> impl IntoView {
     let i18n = use_i18n();
+
+    // Pre-compute domain descriptions to reduce nesting
+    let domain_items = view! {
+        <DomainItem name="Neuroticism" description=t!(i18n, domain_n_desc).into_any() />
+        <DomainItem name="Extraversion" description=t!(i18n, domain_e_desc).into_any() />
+        <DomainItem name="Openness" description=t!(i18n, domain_o_desc).into_any() />
+        <DomainItem name="Agreeableness" description=t!(i18n, domain_a_desc).into_any() />
+        <DomainItem name="Conscientiousness" description=t!(i18n, domain_c_desc).into_any() />
+    }
+    .into_any();
+
+    // Info badges as separate view
+    let info_badges = view! {
+        <div class="flex flex-wrap gap-4 mb-8">
+            <div class="flex items-center bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-full">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                </svg>
+                {t!(i18n, home_questions_count)}
+            </div>
+            <div class="flex items-center bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-4 py-2 rounded-full">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                </svg>
+                {t!(i18n, home_time_estimate)}
+            </div>
+        </div>
+    }
+    .into_any();
 
     view! {
         <div class="max-w-4xl mx-auto px-4 py-8">
@@ -34,75 +88,10 @@ pub fn HomePage() -> impl IntoView {
                     <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">
                         {t!(i18n, home_what_measured)}
                     </h3>
-                    <ul class="space-y-2 text-gray-600 dark:text-gray-300">
-                        <li class="flex items-start">
-                            <span class="text-indigo-500 dark:text-indigo-400 mr-2">"•"</span>
-                            <span>
-                                <strong class="text-gray-800 dark:text-gray-100">"Neuroticism"</strong>
-                                " - "
-                                {t!(i18n, domain_n_desc)}
-                            </span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="text-indigo-500 dark:text-indigo-400 mr-2">"•"</span>
-                            <span>
-                                <strong class="text-gray-800 dark:text-gray-100">"Extraversion"</strong>
-                                " - "
-                                {t!(i18n, domain_e_desc)}
-                            </span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="text-indigo-500 dark:text-indigo-400 mr-2">"•"</span>
-                            <span>
-                                <strong class="text-gray-800 dark:text-gray-100">"Openness"</strong>
-                                " - "
-                                {t!(i18n, domain_o_desc)}
-                            </span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="text-indigo-500 dark:text-indigo-400 mr-2">"•"</span>
-                            <span>
-                                <strong class="text-gray-800 dark:text-gray-100">"Agreeableness"</strong>
-                                " - "
-                                {t!(i18n, domain_a_desc)}
-                            </span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="text-indigo-500 dark:text-indigo-400 mr-2">"•"</span>
-                            <span>
-                                <strong class="text-gray-800 dark:text-gray-100">"Conscientiousness"</strong>
-                                " - "
-                                {t!(i18n, domain_c_desc)}
-                            </span>
-                        </li>
-                    </ul>
+                    <ul class="space-y-2 text-gray-600 dark:text-gray-300">{domain_items}</ul>
                 </div>
 
-                // Info badges
-                <div class="flex flex-wrap gap-4 mb-8">
-                    <div class="flex items-center bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-full">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                            />
-                        </svg>
-                        {t!(i18n, home_questions_count)}
-                    </div>
-                    <div class="flex items-center bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-4 py-2 rounded-full">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                        {t!(i18n, home_time_estimate)}
-                    </div>
-                </div>
+                {info_badges}
 
                 // Start button
                 <A
