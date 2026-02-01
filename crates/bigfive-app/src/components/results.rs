@@ -8,7 +8,7 @@ use leptos_router::components::A;
 use leptos_router::hooks::use_navigate;
 use pulldown_cmark::{Options, Parser, html};
 
-use crate::components::LangToggle;
+use crate::components::{LangToggle, ThemeToggle};
 use crate::i18n::{Locale, use_i18n};
 
 #[cfg(target_arch = "wasm32")]
@@ -199,12 +199,15 @@ pub fn ResultsPage() -> impl IntoView {
 
     view! {
         <div class="max-w-4xl mx-auto px-4 py-8">
-            // Header
+            // Header with language and theme toggles
             <header class="flex justify-between items-center mb-8">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
                     {t!(i18n, results_title)}
                 </h1>
-                <LangToggle/>
+                <div class="flex items-center gap-3">
+                    <LangToggle/>
+                    <ThemeToggle/>
+                </div>
             </header>
 
             {move || {

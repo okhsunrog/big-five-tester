@@ -4,7 +4,7 @@ use leptos::prelude::*;
 use leptos_i18n::t;
 use leptos_router::components::A;
 
-use crate::components::LangToggle;
+use crate::components::{LangToggle, ThemeToggle};
 use crate::i18n::use_i18n;
 
 /// Home page with test description and start button.
@@ -14,12 +14,15 @@ pub fn HomePage() -> impl IntoView {
 
     view! {
         <div class="max-w-4xl mx-auto px-4 py-8">
-            // Header with language toggle
+            // Header with language and theme toggles
             <header class="flex justify-between items-center mb-12">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
                     {t!(i18n, title)}
                 </h1>
-                <LangToggle/>
+                <div class="flex items-center gap-3">
+                    <LangToggle/>
+                    <ThemeToggle/>
+                </div>
             </header>
 
             // Main content

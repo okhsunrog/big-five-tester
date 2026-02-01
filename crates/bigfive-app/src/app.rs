@@ -2,13 +2,13 @@
 
 use leptos::prelude::*;
 use leptos_i18n_router::I18nRoute;
-use leptos_meta::{Link, Meta, MetaTags, Stylesheet, Title, provide_meta_context};
+use leptos_meta::{provide_meta_context, Link, Meta, MetaTags, Stylesheet, Title};
 use leptos_router::{
     components::{Outlet, Route, Router, Routes},
     path,
 };
 
-use crate::components::{HomePage, ResultsPage, TestPage, ThemeToggle};
+use crate::components::{HomePage, ResultsPage, TestPage};
 use crate::i18n::{I18nContextProvider, Locale};
 
 /// Shell function for SSR.
@@ -59,7 +59,6 @@ pub fn App() -> impl IntoView {
             <Router>
                 <Routes fallback=|| "Page not found.".into_view()>
                     <I18nRoute<Locale, _, _> view=|| view! {
-                        <ThemeToggle />
                         <main class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
                             <Outlet />
                         </main>
