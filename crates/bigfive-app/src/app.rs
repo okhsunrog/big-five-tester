@@ -2,7 +2,7 @@
 
 use leptos::prelude::*;
 use leptos_i18n_router::I18nRoute;
-use leptos_meta::{provide_meta_context, Link, Meta, MetaTags, Stylesheet, Title};
+use leptos_meta::{Link, Meta, MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::{
     components::{Outlet, Route, Router, Routes},
     path,
@@ -29,15 +29,15 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
         <!DOCTYPE html>
         <html lang="en">
             <head>
-                <meta charset="utf-8"/>
-                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <script inner_html=theme_script></script>
-                <AutoReload options=options.clone()/>
-                <HydrationScripts options/>
-                <MetaTags/>
+                <AutoReload options=options.clone() />
+                <HydrationScripts options />
+                <MetaTags />
             </head>
             <body>
-                <App/>
+                <App />
             </body>
         </html>
     }
@@ -49,23 +49,28 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/bigfive-app.css"/>
-        <Link rel="icon" type_="image/x-icon" href="/favicon.ico"/>
-        <Meta name="description" content="Take the Big Five personality test (IPIP-NEO-120) and get AI-powered insights about your personality."/>
+        <Stylesheet id="leptos" href="/pkg/bigfive-app.css" />
+        <Link rel="icon" type_="image/x-icon" href="/favicon.ico" />
+        <Meta
+            name="description"
+            content="Take the Big Five personality test (IPIP-NEO-120) and get AI-powered insights about your personality."
+        />
 
-        <Title text="Big Five Personality Test"/>
+        <Title text="Big Five Personality Test" />
 
         <I18nContextProvider>
             <Router>
                 <Routes fallback=|| "Page not found.".into_view()>
-                    <I18nRoute<Locale, _, _> view=|| view! {
-                        <main class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-                            <Outlet />
-                        </main>
+                    <I18nRoute<Locale, _, _> view=|| {
+                        view! {
+                            <main class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+                                <Outlet />
+                            </main>
+                        }
                     }>
-                        <Route path=path!("") view=HomePage/>
-                        <Route path=path!("test") view=TestPage/>
-                        <Route path=path!("results") view=ResultsPage/>
+                        <Route path=path!("") view=HomePage />
+                        <Route path=path!("test") view=TestPage />
+                        <Route path=path!("results") view=ResultsPage />
                     </I18nRoute<Locale, _, _>>
                 </Routes>
             </Router>

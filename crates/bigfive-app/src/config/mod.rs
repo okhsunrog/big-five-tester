@@ -83,16 +83,18 @@ impl AiConfig {
         // Validate safeguard API if present
         if let Some(ref safeguard) = self.safeguard
             && safeguard.enabled
-                && let Some(ref api) = safeguard.api {
-                    api.validate("safeguard.api")?;
-                }
+            && let Some(ref api) = safeguard.api
+        {
+            api.validate("safeguard.api")?;
+        }
 
         // Validate translation API if present
         if let Some(ref translation) = self.translation
             && translation.enabled
-                && let Some(ref api) = translation.api {
-                    api.validate("translation.api")?;
-                }
+            && let Some(ref api) = translation.api
+        {
+            api.validate("translation.api")?;
+        }
 
         Ok(())
     }

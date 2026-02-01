@@ -33,11 +33,12 @@ pub async fn generate_analysis(
 
     // Step 0: Safeguard check (if enabled and context provided)
     if let Some(context) = user_context
-        && !context.trim().is_empty() {
-            debug!("Running safeguard check on user context");
-            check_safeguard(config, context).await?;
-            info!("Safeguard check passed");
-        }
+        && !context.trim().is_empty()
+    {
+        debug!("Running safeguard check on user context");
+        check_safeguard(config, context).await?;
+        info!("Safeguard check passed");
+    }
 
     // Determine if we use translation pipeline
     let use_translation = config

@@ -1,8 +1,6 @@
 //! Theme toggle component for light/dark mode switching.
 
 use leptos::prelude::*;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
 
 /// Get system preferred color scheme
 #[cfg(target_arch = "wasm32")]
@@ -126,7 +124,7 @@ pub fn ThemeToggle() -> impl IntoView {
             {move || match mode.get().as_str() {
                 "light" => "☀️",
                 "dark" => "🌙",
-                _ => "🌓", // auto
+                _ => "🌓",
             }}
         </button>
     }

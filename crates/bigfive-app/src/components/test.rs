@@ -140,25 +140,25 @@ pub fn TestPage() -> impl IntoView {
         <div class="max-w-2xl mx-auto px-4 py-8">
             // Header with language and theme toggles
             <header class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    {t!(i18n, title)}
-                </h1>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{t!(i18n, title)}</h1>
                 <div class="flex items-center gap-3">
-                    <LangToggle/>
-                    <ThemeToggle/>
+                    <LangToggle />
+                    <ThemeToggle />
                 </div>
             </header>
 
             // Progress bar
             <div class="mb-8">
                 <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    <span>{move || format!("{} {}/120", t_string!(i18n, test_question), current_index.get() + 1)}</span>
-                    <span>{move || format!("{}%", ((current_index.get() + 1) as f32 / 120.0 * 100.0) as u8)}</span>
+                    <span>
+                        {move || { format!("{} {}/120", t_string!(i18n, test_question), current_index.get() + 1) }}
+                    </span>
+                    <span>{move || { format!("{}%", ((current_index.get() + 1) as f32 / 120.0 * 100.0) as u8) }}</span>
                 </div>
                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                     <div
                         class="bg-indigo-600 dark:bg-indigo-500 h-2.5 rounded-full transition-all duration-300"
-                        style:width=move || format!("{}%", ((current_index.get() + 1) as f32 / 120.0 * 100.0))
+                        style:width=move || { format!("{}%", ((current_index.get() + 1) as f32 / 120.0 * 100.0)) }
                     />
                 </div>
             </div>
@@ -185,9 +185,15 @@ pub fn TestPage() -> impl IntoView {
                                         class=move || {
                                             let base = "w-full py-3 px-4 rounded-lg border-2 font-medium transition-all duration-200 text-left";
                                             if is_selected {
-                                                format!("{} border-indigo-600 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300", base)
+                                                format!(
+                                                    "{} border-indigo-600 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300",
+                                                    base,
+                                                )
                                             } else {
-                                                format!("{} border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300", base)
+                                                format!(
+                                                    "{} border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300",
+                                                    base,
+                                                )
                                             }
                                         }
                                     >
@@ -195,15 +201,21 @@ pub fn TestPage() -> impl IntoView {
                                             <span class=move || {
                                                 let base = "w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center";
                                                 if is_selected {
-                                                    format!("{} border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-500", base)
+                                                    format!(
+                                                        "{} border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-500",
+                                                        base,
+                                                    )
                                                 } else {
                                                     format!("{} border-gray-300 dark:border-gray-500", base)
                                                 }
                                             }>
-                                                {move || if is_selected {
-                                                    view! { <span class="w-2 h-2 rounded-full bg-white"/> }.into_any()
-                                                } else {
-                                                    view! { <span/> }.into_any()
+                                                {move || {
+                                                    if is_selected {
+                                                        view! { <span class="w-2 h-2 rounded-full bg-white" /> }
+                                                            .into_any()
+                                                    } else {
+                                                        view! { <span /> }.into_any()
+                                                    }
                                                 }}
                                             </span>
                                             {label}
@@ -230,16 +242,19 @@ pub fn TestPage() -> impl IntoView {
                     let idx = current_index.get();
                     let all_done = all_answered();
                     let is_last = idx >= 119;
-
                     if idx == 119 && all_done {
+
                         view! {
                             <button
-                                on:click=move |_| { submit_action.dispatch(()); }
+                                on:click=move |_| {
+                                    submit_action.dispatch(());
+                                }
                                 class="px-6 py-2 rounded-lg bg-green-600 dark:bg-green-500 text-white font-medium hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
                             >
                                 {t!(i18n, test_show_results)}
                             </button>
-                        }.into_any()
+                        }
+                            .into_any()
                     } else {
                         view! {
                             <button
@@ -249,7 +264,8 @@ pub fn TestPage() -> impl IntoView {
                             >
                                 {t!(i18n, test_next)}
                             </button>
-                        }.into_any()
+                        }
+                            .into_any()
                     }
                 }}
             </div>

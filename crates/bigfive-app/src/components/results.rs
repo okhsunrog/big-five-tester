@@ -85,9 +85,10 @@ fn save_description_to_file(
     ));
 
     if let Some(ctx) = user_context
-        && !ctx.trim().is_empty() {
-            content.push_str(&format!("\n**User Context:**\n{}\n", ctx));
-        }
+        && !ctx.trim().is_empty()
+    {
+        content.push_str(&format!("\n**User Context:**\n{}\n", ctx));
+    }
 
     content.push_str("\n---\n\n");
     content.push_str(description);
@@ -201,12 +202,10 @@ pub fn ResultsPage() -> impl IntoView {
         <div class="max-w-4xl mx-auto px-4 py-8">
             // Header with language and theme toggles
             <header class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    {t!(i18n, results_title)}
-                </h1>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{t!(i18n, results_title)}</h1>
                 <div class="flex items-center gap-3">
-                    <LangToggle/>
-                    <ThemeToggle/>
+                    <LangToggle />
+                    <ThemeToggle />
                 </div>
             </header>
 
@@ -219,89 +218,108 @@ pub fn ResultsPage() -> impl IntoView {
                     <div>
                         // Domain scores
                         <div class="space-y-4 mb-8">
-                            {prof.domains.iter().map(|domain_score| {
-                                let domain = domain_score.domain;
-                                let raw = domain_score.raw;
-                                let level = domain_score.level;
-                                let percentage = domain_score.percentage();
-                                let facets = domain_score.facets.clone();
-                                let color = domain_color(&domain);
-                                let is_expanded = move || expanded_domain.get() == Some(domain);
+                            {prof
+                                .domains
+                                .iter()
+                                .map(|domain_score| {
+                                    let domain = domain_score.domain;
+                                    let raw = domain_score.raw;
+                                    let level = domain_score.level;
+                                    let percentage = domain_score.percentage();
+                                    let facets = domain_score.facets.clone();
+                                    let color = domain_color(&domain);
+                                    let is_expanded = move || expanded_domain.get() == Some(domain);
 
-                                view! {
-                                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300">
-                                        // Domain header (clickable)
-                                        <button
-                                            on:click=move |_| toggle_domain(domain)
-                                            class="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                        >
-                                            <div class="flex-1">
-                                                <div class="flex items-center justify-between mb-2">
-                                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                                                        {domain.name()}
-                                                    </h3>
-                                                    <span class="text-sm text-gray-500 dark:text-gray-400">
-                                                        {format!("{} ({})", raw, level_text(level))}
-                                                    </span>
-                                                </div>
-                                                // Score bar
-                                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
-                                                    <div
-                                                        class=format!("{} h-3 rounded-full transition-all duration-500", color)
-                                                        style:width=format!("{}%", percentage)
-                                                    />
-                                                </div>
-                                            </div>
-                                            // Expand icon
-                                            <svg
-                                                class=move || format!(
-                                                    "w-5 h-5 ml-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 {}",
-                                                    if is_expanded() { "rotate-180" } else { "" }
-                                                )
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
+                                    view! {
+                                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300">
+                                            // Domain header (clickable)
+                                            <button
+                                                on:click=move |_| toggle_domain(domain)
+                                                class="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                             >
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                            </svg>
-                                        </button>
-
-                                        // Facets (collapsible)
-                                        <div
-                                            class=move || format!(
-                                                "overflow-hidden transition-all duration-300 {}",
-                                                if is_expanded() { "max-h-96" } else { "max-h-0" }
-                                            )
-                                        >
-                                            <div class="px-4 pb-4 space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
-                                                {facets.iter().map(|facet_score| {
-                                                    let facet_name = facet_score.facet.name();
-                                                    let facet_raw = facet_score.raw;
-                                                    let facet_level = facet_score.level;
-                                                    let facet_pct = facet_score.percentage();
-
-                                                    view! {
-                                                        <div>
-                                                            <div class="flex justify-between text-sm mb-1">
-                                                                <span class="text-gray-600 dark:text-gray-300">{facet_name}</span>
-                                                                <span class="text-gray-500 dark:text-gray-400">
-                                                                    {format!("{} ({})", facet_raw, level_text(facet_level))}
-                                                                </span>
-                                                            </div>
-                                                            <div class="w-full bg-gray-100 dark:bg-gray-600 rounded-full h-2">
-                                                                <div
-                                                                    class=format!("{} h-2 rounded-full opacity-70", color)
-                                                                    style:width=format!("{}%", facet_pct)
-                                                                />
-                                                            </div>
-                                                        </div>
+                                                <div class="flex-1">
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                                            {domain.name()}
+                                                        </h3>
+                                                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                                                            {format!("{} ({})", raw, level_text(level))}
+                                                        </span>
+                                                    </div>
+                                                    // Score bar
+                                                    <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                                                        <div
+                                                            class=format!(
+                                                                "{} h-3 rounded-full transition-all duration-500",
+                                                                color,
+                                                            )
+                                                            style:width=format!("{}%", percentage)
+                                                        />
+                                                    </div>
+                                                </div>
+                                                // Expand icon
+                                                <svg
+                                                    class=move || {
+                                                        format!(
+                                                            "w-5 h-5 ml-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 {}",
+                                                            if is_expanded() { "rotate-180" } else { "" },
+                                                        )
                                                     }
-                                                }).collect_view()}
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 9l-7 7-7-7"
+                                                    />
+                                                </svg>
+                                            </button>
+
+                                            // Facets (collapsible)
+                                            <div class=move || {
+                                                format!(
+                                                    "overflow-hidden transition-all duration-300 {}",
+                                                    if is_expanded() { "max-h-96" } else { "max-h-0" },
+                                                )
+                                            }>
+                                                <div class="px-4 pb-4 space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
+                                                    {facets
+                                                        .iter()
+                                                        .map(|facet_score| {
+                                                            let facet_name = facet_score.facet.name();
+                                                            let facet_raw = facet_score.raw;
+                                                            let facet_level = facet_score.level;
+                                                            let facet_pct = facet_score.percentage();
+
+                                                            view! {
+                                                                <div>
+                                                                    <div class="flex justify-between text-sm mb-1">
+                                                                        <span class="text-gray-600 dark:text-gray-300">
+                                                                            {facet_name}
+                                                                        </span>
+                                                                        <span class="text-gray-500 dark:text-gray-400">
+                                                                            {format!("{} ({})", facet_raw, level_text(facet_level))}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="w-full bg-gray-100 dark:bg-gray-600 rounded-full h-2">
+                                                                        <div
+                                                                            class=format!("{} h-2 rounded-full opacity-70", color)
+                                                                            style:width=format!("{}%", facet_pct)
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        })
+                                                        .collect_view()}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                }
-                            }).collect_view()}
+                                    }
+                                })
+                                .collect_view()}
                         </div>
 
                         // AI Analysis section
@@ -322,12 +340,23 @@ pub fn ResultsPage() -> impl IntoView {
                                             on:click=request_ai
                                             class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
                                         >
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                            <svg
+                                                class="w-4 h-4 mr-2"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                                />
                                             </svg>
                                             {t!(i18n, results_ai_regenerate)}
                                         </button>
-                                    }.into_any()
+                                    }
+                                        .into_any()
                                 } else if ai_loading.get() {
                                     view! {
                                         <div class="py-12">
@@ -335,12 +364,22 @@ pub fn ResultsPage() -> impl IntoView {
                                             <div class="flex justify-center mb-6">
                                                 <div class="relative">
                                                     // Pulsing rings
-                                                    <div class="absolute inset-0 animate-ping rounded-full bg-indigo-400 dark:bg-indigo-500 opacity-20"/>
-                                                    <div class="absolute inset-2 animate-pulse rounded-full bg-indigo-300 dark:bg-indigo-400 opacity-30"/>
+                                                    <div class="absolute inset-0 animate-ping rounded-full bg-indigo-400 dark:bg-indigo-500 opacity-20" />
+                                                    <div class="absolute inset-2 animate-pulse rounded-full bg-indigo-300 dark:bg-indigo-400 opacity-30" />
                                                     // Brain/AI icon
                                                     <div class="relative flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
-                                                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                                        <svg
+                                                            class="w-8 h-8 text-white"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="1.5"
+                                                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                                                            />
                                                         </svg>
                                                     </div>
                                                 </div>
@@ -351,16 +390,26 @@ pub fn ResultsPage() -> impl IntoView {
                                                     {t!(i18n, results_ai_loading)}
                                                 </p>
                                                 <div class="flex justify-center gap-1">
-                                                    <span class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 0ms"/>
-                                                    <span class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 150ms"/>
-                                                    <span class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 300ms"/>
+                                                    <span
+                                                        class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"
+                                                        style="animation-delay: 0ms"
+                                                    />
+                                                    <span
+                                                        class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"
+                                                        style="animation-delay: 150ms"
+                                                    />
+                                                    <span
+                                                        class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"
+                                                        style="animation-delay: 300ms"
+                                                    />
                                                 </div>
                                                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
                                                     {t!(i18n, results_ai_loading_hint)}
                                                 </p>
                                             </div>
                                         </div>
-                                    }.into_any()
+                                    }
+                                        .into_any()
                                 } else if let Some(error) = ai_error.get() {
                                     view! {
                                         <div class="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-4 rounded-lg mb-4">
@@ -373,7 +422,8 @@ pub fn ResultsPage() -> impl IntoView {
                                         >
                                             {t!(i18n, results_ai_retry)}
                                         </button>
-                                    }.into_any()
+                                    }
+                                        .into_any()
                                 } else {
                                     view! {
                                         <p class="text-gray-600 dark:text-gray-300 mb-4">
@@ -408,12 +458,23 @@ pub fn ResultsPage() -> impl IntoView {
                                             on:click=request_ai
                                             class="px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white font-medium rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center"
                                         >
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                            <svg
+                                                class="w-5 h-5 mr-2"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                                                />
                                             </svg>
                                             {t!(i18n, results_ai_button)}
                                         </button>
-                                    }.into_any()
+                                    }
+                                        .into_any()
                                 }
                             }}
                         </div>
@@ -434,7 +495,8 @@ pub fn ResultsPage() -> impl IntoView {
                             </A>
                         </div>
                     </div>
-                }.into_any()
+                }
+                    .into_any()
             }}
         </div>
     }
