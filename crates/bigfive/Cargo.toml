@@ -1,0 +1,18 @@
+[package]
+name = "bigfive"
+description = "Big Five personality test (IPIP-NEO-120) library"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords = ["psychology", "personality", "big-five", "ipip", "neo"]
+categories = ["science"]
+
+[features]
+default = ["serde"]
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

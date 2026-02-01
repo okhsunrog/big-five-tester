@@ -1,0 +1,6 @@
+/target
+.env
+ai_config.toml
+/analyses
+node_modules
+big-five-tester-prompt.md

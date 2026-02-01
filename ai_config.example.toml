@@ -1,0 +1,163 @@
+# Big Five AI Analysis Configuration
+# ==================================
+#
+# This file configures the AI pipeline for personality analysis.
+# Copy this file to `ai_config.toml` and adjust settings as needed.
+#
+# Environment variable AI_CONFIG_PATH can override the config file location.
+# Default: ./ai_config.toml
+
+# =============================================================================
+# API Configuration (used by analysis model, inherited by safeguard/translation)
+# =============================================================================
+[api]
+# Provider type: "anthropic" or "openai" (for OpenAI-compatible APIs)
+provider = "openai"
+
+# Environment variable containing the API key
+api_key_env = "OPENROUTER_API_KEY"
+
+# API endpoint URL (required for "openai" provider)
+api_url = "https://openrouter.ai/api/v1/chat/completions"
+
+# =============================================================================
+# Optional: Prompt Injection Protection (Safeguard)
+# =============================================================================
+# Checks user-provided context for prompt injection attempts before analysis.
+# Uses a cheap/fast model to classify input as SAFE or UNSAFE.
+
+[safeguard]
+enabled = true
+# gpt-oss-safeguard-20b: fast & accurate for prompt injection detection
+# Needs sufficient max_tokens for reasoning, but very cheap (~$0.0001 per check)
+model = "openai/gpt-oss-safeguard-20b"
+max_tokens = 1024
+
+# Optional: Override API for safeguard (uses main [api] if omitted)
+# [safeguard.api]
+# provider = "openai"
+# api_key_env = "OLLAMA_API_KEY"
+# api_url = "http://localhost:11434/v1/chat/completions"
+
+# =============================================================================
+# Analysis Configuration
+# =============================================================================
+# Main model for personality analysis. Always uses the main [api] configuration.
+
+[analysis]
+model = "deepseek/deepseek-chat-v3-0324"
+max_tokens = 8192
+
+# =============================================================================
+# Optional: Two-Step Translation Pipeline
+# =============================================================================
+# If enabled, analysis is generated in source_language, then translated to
+# the user's interface language. This can improve quality for some models
+# that perform better in their "native" language.
+#
+# If disabled or omitted, analysis is generated directly in the interface language.
+
+[translation]
+enabled = true
+
+# Language for analysis generation (model's "native" language)
+# Options: "en", "ru", "zh"
+source_language = "zh"
+
+# Model for translation
+model = "google/gemini-2.5-flash-lite"
+max_tokens = 8192
+
+# Optional: Override API for translation (uses main [api] if omitted)
+# [translation.api]
+# provider = "openai"
+# api_key_env = "OPENROUTER_API_KEY"
+# api_url = "https://openrouter.ai/api/v1/chat/completions"
+
+
+# =============================================================================
+# Example Configurations
+# =============================================================================
+#
+# --- Example 1: Best Quality (DeepSeek Chinese + Gemini translation) ---
+#
+# [api]
+# provider = "openai"
+# api_key_env = "OPENROUTER_API_KEY"
+# api_url = "https://openrouter.ai/api/v1/chat/completions"
+#
+# [safeguard]
+# enabled = true
+# model = "openai/gpt-oss-safeguard-20b"
+# max_tokens = 1024
+#
+# [analysis]
+# model = "deepseek/deepseek-chat-v3-0324"
+# max_tokens = 8192
+#
+# [translation]
+# enabled = true
+# source_language = "zh"
+# model = "google/gemini-2.5-flash-lite"
+#
+# --- Example 2: Best Value (Qwen direct, no translation) ---
+#
+# [api]
+# provider = "openai"
+# api_key_env = "OPENROUTER_API_KEY"
+# api_url = "https://openrouter.ai/api/v1/chat/completions"
+#
+# [safeguard]
+# enabled = false
+#
+# [analysis]
+# model = "qwen/qwen3-235b-a22b-2507"
+# max_tokens = 8192
+#
+# # [translation] omitted = uses interface language directly
+#
+# --- Example 3: Premium (Claude Opus via Anthropic API) ---
+#
+# [api]
+# provider = "anthropic"
+# api_key_env = "ANTHROPIC_API_KEY"
+#
+# [safeguard]
+# enabled = true
+# model = "openai/gpt-oss-safeguard-20b"
+# max_tokens = 1024
+# [safeguard.api]
+# provider = "openai"
+# api_key_env = "OPENROUTER_API_KEY"
+# api_url = "https://openrouter.ai/api/v1/chat/completions"
+#
+# [analysis]
+# model = "claude-opus-4-5-20250514"
+# max_tokens = 8192
+#
+# --- Example 4: Hybrid (Anthropic + OpenRouter + Local Ollama) ---
+#
+# [api]
+# provider = "anthropic"
+# api_key_env = "ANTHROPIC_API_KEY"
+#
+# [safeguard]
+# enabled = true
+# model = "llama-guard3:8b"  # Local Ollama for safeguard
+# max_tokens = 128
+# [safeguard.api]
+# provider = "openai"
+# api_key_env = "UNUSED"
+# api_url = "http://localhost:11434/v1/chat/completions"
+#
+# [analysis]
+# model = "claude-sonnet-4-20250514"
+#
+# [translation]
+# enabled = true
+# source_language = "en"
+# model = "qwen2.5:32b"
+# [translation.api]
+# provider = "openai"
+# api_key_env = "UNUSED"
+# api_url = "http://localhost:11434/v1/chat/completions"

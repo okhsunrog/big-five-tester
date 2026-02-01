@@ -1,0 +1,48 @@
+{
+  "title": "Big Five Personality Test",
+
+  "home_subtitle": "Discover Your Personality",
+  "home_description": "The Big Five personality test is a scientific assessment that measures five key dimensions of your personality. This version uses the IPIP-NEO-120 inventory, a well-validated instrument based on decades of psychological research.",
+  "home_what_measured": "What This Test Measures",
+  "home_questions_count": "120 questions",
+  "home_time_estimate": "~15 minutes",
+  "home_start_button": "Start Test",
+
+  "domain_n_desc": "Emotional sensitivity and stress response",
+  "domain_e_desc": "Social engagement and energy levels",
+  "domain_o_desc": "Creativity and intellectual curiosity",
+  "domain_a_desc": "Cooperation and empathy towards others",
+  "domain_c_desc": "Organization and goal-directed behavior",
+
+  "test_question": "Question",
+  "test_back": "Back",
+  "test_next": "Next",
+  "test_show_results": "Show Results",
+  "test_answered": "Answered",
+
+  "answer_1": "Very Inaccurate",
+  "answer_2": "Moderately Inaccurate",
+  "answer_3": "Neither Accurate Nor Inaccurate",
+  "answer_4": "Moderately Accurate",
+  "answer_5": "Very Accurate",
+
+  "results_title": "Your Results",
+  "results_ai_title": "AI Personality Analysis",
+  "results_ai_description": "Get a personalized AI-generated description of your personality based on your test results.",
+  "results_ai_button": "Generate AI Analysis",
+  "results_ai_loading": "Analyzing your personality",
+  "results_ai_loading_hint": "This may take 30 seconds to 1 minute...",
+  "results_ai_error": "Failed to generate analysis",
+  "results_ai_retry": "Try Again",
+  "results_ai_regenerate": "Regenerate",
+  "results_context_label": "Tell us about yourself",
+  "results_context_optional": "(optional)",
+  "results_context_placeholder": "A few sentences about your life, work, hobbies, or anything that helps paint a fuller picture...",
+  "results_context_hint": "Adding context helps the AI provide more personalized and relevant insights.",
+  "results_retake": "Retake Test",
+  "results_home": "Back to Home",
+
+  "level_low": "Low",
+  "level_neutral": "Average",
+  "level_high": "High"
+}

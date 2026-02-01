@@ -1,0 +1,76 @@
+[package]
+name = "bigfive-app"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "bigfive-app"
+required-features = ["ssr"]
+
+[features]
+default = []
+hydrate = ["leptos/hydrate", "leptos_i18n/hydrate"]
+ssr = [
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+    "leptos_i18n/ssr",
+    "leptos_i18n/axum",
+    "leptos_i18n_router/ssr",
+    "dep:leptos_axum",
+    "dep:axum",
+    "dep:tokio",
+    "dep:dotenvy",
+    "dep:reqwest",
+    "dep:toml",
+    "dep:thiserror",
+    "dep:tracing-subscriber",
+    "dep:chrono",
+]
+
+[dependencies]
+bigfive = { workspace = true }
+leptos = { workspace = true }
+leptos_meta = { workspace = true }
+leptos_router = { workspace = true }
+leptos_axum = { workspace = true, optional = true }
+axum = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+dotenvy = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
+toml = { version = "0.8", optional = true }
+thiserror = { version = "2", optional = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+leptos_i18n = "0.6"
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["Window", "Storage", "Navigator"] }
+console_error_panic_hook = "0.1"
+leptos_i18n_router = "0.6.0"
+pulldown-cmark = "0.13.0"
+tracing = { version = "0.1.44", features = ["log"] }
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"], optional = true }
+once_cell = "1.21.3"
+chrono = { version = "0.4.43", features = ["clock"], optional = true }
+
+[build-dependencies]
+chrono = "0.4.43"
+leptos_i18n_build = "0.6.0"
+
+[package.metadata.leptos]
+output-name = "bigfive-app"
+site-root = "target/site"
+site-pkg-dir = "pkg"
+site-addr = "127.0.0.1:3032"
+reload-port = 3033
+tailwind-input-file = "style/tailwind.css"
+assets-dir = "public"
+bin-features = ["ssr"]
+bin-default-features = false
+lib-features = ["hydrate"]
+lib-default-features = false
+
+

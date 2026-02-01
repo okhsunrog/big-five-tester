@@ -1,0 +1,17 @@
+[Unit]
+Description=Big Five Personality Test
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/bigfive
+ExecStart=/opt/bigfive/bigfive-app
+Environment=LEPTOS_SITE_ADDR=0.0.0.0:3032
+Environment=LEPTOS_SITE_ROOT=site
+EnvironmentFile=/opt/bigfive/.env
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
