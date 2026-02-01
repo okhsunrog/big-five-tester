@@ -7,8 +7,8 @@ use crate::i18n::{Locale, use_i18n};
 /// Get the native name of a locale
 fn locale_name(locale: Locale) -> &'static str {
     match locale {
-        Locale::en => "English",
-        Locale::ru => "Русский",
+        Locale::En => "English",
+        Locale::Ru => "Русский",
     }
 }
 
@@ -67,15 +67,15 @@ pub fn LangToggle() -> AnyView {
     let current_name = move || locale_name(current_locale());
 
     // Create locale options with type erasure
-    let en_is_current = Signal::derive(move || current_locale() == Locale::en);
-    let ru_is_current = Signal::derive(move || current_locale() == Locale::ru);
+    let en_is_current = Signal::derive(move || current_locale() == Locale::En);
+    let ru_is_current = Signal::derive(move || current_locale() == Locale::Ru);
 
     let select_en = move || {
-        i18n.set_locale(Locale::en);
+        i18n.set_locale(Locale::En);
         set_is_open.set(false);
     };
     let select_ru = move || {
-        i18n.set_locale(Locale::ru);
+        i18n.set_locale(Locale::Ru);
         set_is_open.set(false);
     };
 
@@ -115,8 +115,8 @@ pub fn LangToggle() -> AnyView {
 
                 // Menu
                 <div class="absolute right-0 z-20 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
-                    <LocaleOption locale=Locale::en is_current=en_is_current on_select=select_en />
-                    <LocaleOption locale=Locale::ru is_current=ru_is_current on_select=select_ru />
+                    <LocaleOption locale=Locale::En is_current=en_is_current on_select=select_en />
+                    <LocaleOption locale=Locale::Ru is_current=ru_is_current on_select=select_ru />
                 </div>
             </Show>
         </div>

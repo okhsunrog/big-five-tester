@@ -12,14 +12,11 @@ required-features = ["ssr"]
 
 [features]
 default = []
-hydrate = ["leptos/hydrate", "leptos_i18n/hydrate", "dep:gloo-timers"]
+hydrate = ["leptos/hydrate", "dep:gloo-timers"]
 ssr = [
     "leptos/ssr",
     "leptos_meta/ssr",
     "leptos_router/ssr",
-    "leptos_i18n/ssr",
-    "leptos_i18n/axum",
-    "leptos_i18n_router/ssr",
     "dep:leptos_axum",
     "dep:axum",
     "dep:tokio",
@@ -46,11 +43,9 @@ toml = { version = "0.8", optional = true }
 thiserror = { version = "2", optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-leptos_i18n = "0.6"
 wasm-bindgen = "0.2"
-web-sys = { version = "0.3", features = ["Window", "Storage", "Navigator"] }
+web-sys = { version = "0.3", features = ["Window", "Storage", "Navigator", "Location", "MediaQueryList"] }
 console_error_panic_hook = "0.1"
-leptos_i18n_router = "0.6.0"
 pulldown-cmark = "0.13.0"
 tracing = { version = "0.1.44", features = ["log"] }
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"], optional = true }
@@ -61,7 +56,6 @@ gloo-timers = { version = "0.3.0", features = ["futures"], optional = true }
 
 [build-dependencies]
 chrono = "0.4.43"
-leptos_i18n_build = "0.6.0"
 
 [package.metadata.leptos]
 output-name = "bigfive-app"
@@ -75,5 +69,3 @@ bin-features = ["ssr"]
 bin-default-features = false
 lib-features = ["hydrate"]
 lib-default-features = false
-
-

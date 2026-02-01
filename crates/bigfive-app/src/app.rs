@@ -1,15 +1,14 @@
 //! Main application component and routing.
 
 use leptos::prelude::*;
-use leptos_i18n_router::I18nRoute;
 use leptos_meta::{Link, Meta, MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::{
-    components::{Outlet, Route, Router, Routes},
+    components::{Outlet, ParentRoute, Route, Router, Routes},
     path,
 };
 
 use crate::components::{HomePage, ResultsPage, TestPage};
-use crate::i18n::{I18nContextProvider, Locale};
+use crate::i18n::I18nProvider;
 
 /// Shell function for SSR.
 pub fn shell(options: LeptosOptions) -> impl IntoView {
@@ -43,6 +42,18 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
     }
 }
 
+/// Layout wrapper that provides i18n context.
+#[component]
+fn LocaleLayout() -> impl IntoView {
+    view! {
+        <I18nProvider>
+            <main class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+                <Outlet />
+            </main>
+        </I18nProvider>
+    }
+}
+
 /// Main application component.
 #[component]
 pub fn App() -> impl IntoView {
@@ -58,22 +69,45 @@ pub fn App() -> impl IntoView {
 
         <Title text="Big Five Personality Test" />
 
-        <I18nContextProvider>
-            <Router>
-                <Routes fallback=|| "Page not found.".into_view()>
-                    <I18nRoute<Locale, _, _> view=|| {
-                        view! {
-                            <main class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-                                <Outlet />
-                            </main>
-                        }
-                    }>
-                        <Route path=path!("") view=HomePage />
-                        <Route path=path!("test") view=TestPage />
-                        <Route path=path!("results") view=ResultsPage />
-                    </I18nRoute<Locale, _, _>>
-                </Routes>
-            </Router>
-        </I18nContextProvider>
+        <Router>
+            <Routes fallback=|| "Page not found.".into_view()>
+                // English routes
+                <ParentRoute path=path!("/en") view=LocaleLayout>
+                    <Route path=path!("") view=HomePage />
+                    <Route path=path!("test") view=TestPage />
+                    <Route path=path!("results") view=ResultsPage />
+                </ParentRoute>
+
+                // Russian routes
+                <ParentRoute path=path!("/ru") view=LocaleLayout>
+                    <Route path=path!("") view=HomePage />
+                    <Route path=path!("test") view=TestPage />
+                    <Route path=path!("results") view=ResultsPage />
+                </ParentRoute>
+
+                // Root redirect to /en
+                <Route
+                    path=path!("")
+                    view=|| {
+                        view! { <RedirectToLocale /> }
+                    }
+                />
+            </Routes>
+        </Router>
     }
+}
+
+/// Redirect to default locale.
+#[component]
+fn RedirectToLocale() -> impl IntoView {
+    Effect::new(|_| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(window) = web_sys::window() {
+                let _ = window.location().set_pathname("/en");
+            }
+        }
+    });
+
+    view! { <div>"Redirecting..."</div> }
 }

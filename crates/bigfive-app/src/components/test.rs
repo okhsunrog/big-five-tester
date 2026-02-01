@@ -2,7 +2,6 @@
 
 use bigfive::{Answer, Ipip120};
 use leptos::prelude::*;
-use leptos_i18n::{t, t_string};
 use leptos_router::hooks::use_navigate;
 
 use crate::components::{LangToggle, ThemeToggle};
@@ -23,8 +22,8 @@ pub fn TestPage() -> impl IntoView {
 
     // Load inventory based on language
     let inventory = Memo::new(move |_| match i18n.get_locale() {
-        Locale::en => Ipip120::english(),
-        Locale::ru => Ipip120::russian(),
+        Locale::En => Ipip120::english(),
+        Locale::Ru => Ipip120::russian(),
     });
 
     // Current question index (0-119)
@@ -115,7 +114,7 @@ pub fn TestPage() -> impl IntoView {
                     Ok(profile) => {
                         save_profile(&profile);
                         clear_test_progress();
-                        nav("/results", Default::default());
+                        nav("results", Default::default());
                     }
                     Err(e) => {
                         leptos::logging::error!("Failed to calculate profile: {}", e);
@@ -125,14 +124,14 @@ pub fn TestPage() -> impl IntoView {
         }
     });
 
-    // Answer button labels - using t_string! for String values
+    // Answer button labels
     let answer_labels = move || {
         vec![
-            (1u8, t_string!(i18n, answer_1)),
-            (2u8, t_string!(i18n, answer_2)),
-            (3u8, t_string!(i18n, answer_3)),
-            (4u8, t_string!(i18n, answer_4)),
-            (5u8, t_string!(i18n, answer_5)),
+            (1u8, i18n.t("answer_1").to_string()),
+            (2u8, i18n.t("answer_2").to_string()),
+            (3u8, i18n.t("answer_3").to_string()),
+            (4u8, i18n.t("answer_4").to_string()),
+            (5u8, i18n.t("answer_5").to_string()),
         ]
     };
 
@@ -140,7 +139,7 @@ pub fn TestPage() -> impl IntoView {
         <div class="max-w-2xl mx-auto px-4 py-8">
             // Header with language and theme toggles
             <header class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{t!(i18n, title)}</h1>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{move || i18n.t("title")}</h1>
                 <div class="flex items-center gap-3">
                     <LangToggle />
                     <ThemeToggle />
@@ -151,7 +150,7 @@ pub fn TestPage() -> impl IntoView {
             <div class="mb-8">
                 <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
                     <span>
-                        {move || { format!("{} {}/120", t_string!(i18n, test_question), current_index.get() + 1) }}
+                        {move || { format!("{} {}/120", i18n.t("test_question").to_string(), current_index.get() + 1) }}
                     </span>
                     <span>{move || { format!("{}%", ((current_index.get() + 1) as f32 / 120.0 * 100.0) as u8) }}</span>
                 </div>
@@ -218,7 +217,7 @@ pub fn TestPage() -> impl IntoView {
                                                     }
                                                 }}
                                             </span>
-                                            {label}
+                                            {label.clone()}
                                         </span>
                                     </button>
                                 }
@@ -235,7 +234,7 @@ pub fn TestPage() -> impl IntoView {
                     prop:disabled=move || current_index.get() == 0
                     class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                    {t!(i18n, test_back)}
+                    {move || i18n.t("test_back")}
                 </button>
 
                 {move || {
@@ -251,7 +250,7 @@ pub fn TestPage() -> impl IntoView {
                                 }
                                 class="px-6 py-2 rounded-lg bg-green-600 dark:bg-green-500 text-white font-medium hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
                             >
-                                {t!(i18n, test_show_results)}
+                                {move || i18n.t("test_show_results")}
                             </button>
                         }
                             .into_any()
@@ -262,7 +261,7 @@ pub fn TestPage() -> impl IntoView {
                                 prop:disabled=is_last
                                 class="px-6 py-2 rounded-lg bg-indigo-600 dark:bg-indigo-500 text-white font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
-                                {t!(i18n, test_next)}
+                                {move || i18n.t("test_next")}
                             </button>
                         }
                             .into_any()
@@ -274,7 +273,7 @@ pub fn TestPage() -> impl IntoView {
             <div class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 {move || {
                     let answered = answers.get().len();
-                    format!("{}: {}/120", t_string!(i18n, test_answered), answered)
+                    format!("{}: {}/120", i18n.t("test_answered").to_string(), answered)
                 }}
             </div>
         </div>

@@ -3,14 +3,13 @@
 use bigfive::{Domain, Facet, PersonalityProfile, ScoreLevel};
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use leptos_i18n::{t, t_string};
 use leptos_router::components::A;
 use leptos_router::hooks::use_navigate;
 use pulldown_cmark::{Options, Parser, html};
 use serde::{Deserialize, Serialize};
 
 use crate::components::{LangToggle, ThemeToggle};
-use crate::i18n::{Locale, use_i18n};
+use crate::i18n::use_i18n;
 
 #[cfg(target_arch = "wasm32")]
 const STORAGE_KEY_PROFILE: &str = "bigfive_profile";
@@ -287,10 +286,7 @@ pub fn ResultsPage() -> impl IntoView {
         set_ai_error.set(None);
 
         spawn_local(async move {
-            let lang_str = match locale {
-                Locale::en => "en",
-                Locale::ru => "ru",
-            };
+            let lang_str = locale.code();
 
             // Start the analysis job
             #[cfg(target_arch = "wasm32")]
@@ -408,20 +404,20 @@ pub fn ResultsPage() -> impl IntoView {
     // Get level text
     let level_text = move |level: ScoreLevel| -> String {
         match level {
-            ScoreLevel::Low => t_string!(i18n, level_low).to_string(),
-            ScoreLevel::Neutral => t_string!(i18n, level_neutral).to_string(),
-            ScoreLevel::High => t_string!(i18n, level_high).to_string(),
+            ScoreLevel::Low => i18n.t("level_low").to_string(),
+            ScoreLevel::Neutral => i18n.t("level_neutral").to_string(),
+            ScoreLevel::High => i18n.t("level_high").to_string(),
         }
     };
 
     // Get localized domain name
     let domain_name = move |domain: Domain| -> String {
         match domain {
-            Domain::Neuroticism => t_string!(i18n, domain_neuroticism).to_string(),
-            Domain::Extraversion => t_string!(i18n, domain_extraversion).to_string(),
-            Domain::Openness => t_string!(i18n, domain_openness).to_string(),
-            Domain::Agreeableness => t_string!(i18n, domain_agreeableness).to_string(),
-            Domain::Conscientiousness => t_string!(i18n, domain_conscientiousness).to_string(),
+            Domain::Neuroticism => i18n.t("domain_neuroticism").to_string(),
+            Domain::Extraversion => i18n.t("domain_extraversion").to_string(),
+            Domain::Openness => i18n.t("domain_openness").to_string(),
+            Domain::Agreeableness => i18n.t("domain_agreeableness").to_string(),
+            Domain::Conscientiousness => i18n.t("domain_conscientiousness").to_string(),
         }
     };
 
@@ -429,40 +425,40 @@ pub fn ResultsPage() -> impl IntoView {
     let facet_name = move |facet: Facet| -> String {
         match facet {
             // Neuroticism
-            Facet::Anxiety => t_string!(i18n, facet_anxiety).to_string(),
-            Facet::Anger => t_string!(i18n, facet_anger).to_string(),
-            Facet::Depression => t_string!(i18n, facet_depression).to_string(),
-            Facet::SelfConsciousness => t_string!(i18n, facet_self_consciousness).to_string(),
-            Facet::Immoderation => t_string!(i18n, facet_immoderation).to_string(),
-            Facet::Vulnerability => t_string!(i18n, facet_vulnerability).to_string(),
+            Facet::Anxiety => i18n.t("facet_anxiety").to_string(),
+            Facet::Anger => i18n.t("facet_anger").to_string(),
+            Facet::Depression => i18n.t("facet_depression").to_string(),
+            Facet::SelfConsciousness => i18n.t("facet_self_consciousness").to_string(),
+            Facet::Immoderation => i18n.t("facet_immoderation").to_string(),
+            Facet::Vulnerability => i18n.t("facet_vulnerability").to_string(),
             // Extraversion
-            Facet::Friendliness => t_string!(i18n, facet_friendliness).to_string(),
-            Facet::Gregariousness => t_string!(i18n, facet_gregariousness).to_string(),
-            Facet::Assertiveness => t_string!(i18n, facet_assertiveness).to_string(),
-            Facet::ActivityLevel => t_string!(i18n, facet_activity_level).to_string(),
-            Facet::ExcitementSeeking => t_string!(i18n, facet_excitement_seeking).to_string(),
-            Facet::Cheerfulness => t_string!(i18n, facet_cheerfulness).to_string(),
+            Facet::Friendliness => i18n.t("facet_friendliness").to_string(),
+            Facet::Gregariousness => i18n.t("facet_gregariousness").to_string(),
+            Facet::Assertiveness => i18n.t("facet_assertiveness").to_string(),
+            Facet::ActivityLevel => i18n.t("facet_activity_level").to_string(),
+            Facet::ExcitementSeeking => i18n.t("facet_excitement_seeking").to_string(),
+            Facet::Cheerfulness => i18n.t("facet_cheerfulness").to_string(),
             // Openness
-            Facet::Imagination => t_string!(i18n, facet_imagination).to_string(),
-            Facet::ArtisticInterests => t_string!(i18n, facet_artistic_interests).to_string(),
-            Facet::Emotionality => t_string!(i18n, facet_emotionality).to_string(),
-            Facet::Adventurousness => t_string!(i18n, facet_adventurousness).to_string(),
-            Facet::Intellect => t_string!(i18n, facet_intellect).to_string(),
-            Facet::Liberalism => t_string!(i18n, facet_liberalism).to_string(),
+            Facet::Imagination => i18n.t("facet_imagination").to_string(),
+            Facet::ArtisticInterests => i18n.t("facet_artistic_interests").to_string(),
+            Facet::Emotionality => i18n.t("facet_emotionality").to_string(),
+            Facet::Adventurousness => i18n.t("facet_adventurousness").to_string(),
+            Facet::Intellect => i18n.t("facet_intellect").to_string(),
+            Facet::Liberalism => i18n.t("facet_liberalism").to_string(),
             // Agreeableness
-            Facet::Trust => t_string!(i18n, facet_trust).to_string(),
-            Facet::Morality => t_string!(i18n, facet_morality).to_string(),
-            Facet::Altruism => t_string!(i18n, facet_altruism).to_string(),
-            Facet::Cooperation => t_string!(i18n, facet_cooperation).to_string(),
-            Facet::Modesty => t_string!(i18n, facet_modesty).to_string(),
-            Facet::Sympathy => t_string!(i18n, facet_sympathy).to_string(),
+            Facet::Trust => i18n.t("facet_trust").to_string(),
+            Facet::Morality => i18n.t("facet_morality").to_string(),
+            Facet::Altruism => i18n.t("facet_altruism").to_string(),
+            Facet::Cooperation => i18n.t("facet_cooperation").to_string(),
+            Facet::Modesty => i18n.t("facet_modesty").to_string(),
+            Facet::Sympathy => i18n.t("facet_sympathy").to_string(),
             // Conscientiousness
-            Facet::SelfEfficacy => t_string!(i18n, facet_self_efficacy).to_string(),
-            Facet::Orderliness => t_string!(i18n, facet_orderliness).to_string(),
-            Facet::Dutifulness => t_string!(i18n, facet_dutifulness).to_string(),
-            Facet::AchievementStriving => t_string!(i18n, facet_achievement_striving).to_string(),
-            Facet::SelfDiscipline => t_string!(i18n, facet_self_discipline).to_string(),
-            Facet::Cautiousness => t_string!(i18n, facet_cautiousness).to_string(),
+            Facet::SelfEfficacy => i18n.t("facet_self_efficacy").to_string(),
+            Facet::Orderliness => i18n.t("facet_orderliness").to_string(),
+            Facet::Dutifulness => i18n.t("facet_dutifulness").to_string(),
+            Facet::AchievementStriving => i18n.t("facet_achievement_striving").to_string(),
+            Facet::SelfDiscipline => i18n.t("facet_self_discipline").to_string(),
+            Facet::Cautiousness => i18n.t("facet_cautiousness").to_string(),
         }
     };
 
@@ -470,7 +466,7 @@ pub fn ResultsPage() -> impl IntoView {
         <div class="max-w-4xl mx-auto px-4 py-8">
             // Header with language and theme toggles
             <header class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{t!(i18n, results_title)}</h1>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{i18n.t("results_title")}</h1>
                 <div class="flex items-center gap-3">
                     <LangToggle />
                     <ThemeToggle />
@@ -593,7 +589,7 @@ pub fn ResultsPage() -> impl IntoView {
                         // AI Analysis section
                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 transition-colors duration-300">
                             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                                {t!(i18n, results_ai_title)}
+                                {i18n.t("results_ai_title")}
                             </h2>
 
                             {move || {
@@ -621,7 +617,7 @@ pub fn ResultsPage() -> impl IntoView {
                                                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                                                 />
                                             </svg>
-                                            {t!(i18n, results_ai_regenerate)}
+                                            {i18n.t("results_ai_regenerate")}
                                         </button>
                                     }
                                         .into_any()
@@ -655,7 +651,7 @@ pub fn ResultsPage() -> impl IntoView {
                                             // Loading text with animated dots
                                             <div class="text-center">
                                                 <p class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-2">
-                                                    {t!(i18n, results_ai_loading)}
+                                                    {i18n.t("results_ai_loading")}
                                                 </p>
                                                 <div class="flex justify-center gap-1">
                                                     <span
@@ -672,7 +668,7 @@ pub fn ResultsPage() -> impl IntoView {
                                                     />
                                                 </div>
                                                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                                                    {t!(i18n, results_ai_loading_hint)}
+                                                    {i18n.t("results_ai_loading_hint")}
                                                 </p>
                                             </div>
                                         </div>
@@ -681,35 +677,35 @@ pub fn ResultsPage() -> impl IntoView {
                                 } else if let Some(error) = ai_error.get() {
                                     view! {
                                         <div class="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-4 rounded-lg mb-4">
-                                            <p class="font-medium">{t!(i18n, results_ai_error)}</p>
+                                            <p class="font-medium">{i18n.t("results_ai_error")}</p>
                                             <p class="text-sm mt-1">{error}</p>
                                         </div>
                                         <button
                                             on:click=request_ai
                                             class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
                                         >
-                                            {t!(i18n, results_ai_retry)}
+                                            {i18n.t("results_ai_retry")}
                                         </button>
                                     }
                                         .into_any()
                                 } else {
                                     view! {
                                         <p class="text-gray-600 dark:text-gray-300 mb-4">
-                                            {t!(i18n, results_ai_description)}
+                                            {i18n.t("results_ai_description")}
                                         </p>
 
                                         // Optional user context
                                         <div class="mb-6">
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                {t!(i18n, results_context_label)}
+                                                {i18n.t("results_context_label")}
                                                 <span class="text-gray-400 dark:text-gray-500 font-normal ml-1">
-                                                    {t!(i18n, results_context_optional)}
+                                                    {i18n.t("results_context_optional")}
                                                 </span>
                                             </label>
                                             <textarea
                                                 class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                                 rows="3"
-                                                placeholder=t_string!(i18n, results_context_placeholder)
+                                                placeholder=i18n.t("results_context_placeholder")
                                                 prop:value=move || user_context.get()
                                                 on:input=move |ev| {
                                                     let value = event_target_value(&ev);
@@ -718,14 +714,14 @@ pub fn ResultsPage() -> impl IntoView {
                                                 }
                                             />
                                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                {t!(i18n, results_context_hint)}
+                                                {i18n.t("results_context_hint")}
                                             </p>
                                         </div>
 
                                         // Model selector
                                         <div class="mb-6">
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                {t!(i18n, results_model_select)}
+                                                {i18n.t("results_model_select")}
                                             </label>
                                             <select
                                                 class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 dark:text-gray-200"
@@ -769,7 +765,7 @@ pub fn ResultsPage() -> impl IntoView {
                                                     d="M13 10V3L4 14h7v7l9-11h-7z"
                                                 />
                                             </svg>
-                                            {t!(i18n, results_ai_button)}
+                                            {i18n.t("results_ai_button")}
                                         </button>
                                     }
                                         .into_any()
@@ -783,13 +779,13 @@ pub fn ResultsPage() -> impl IntoView {
                                 href="/test"
                                 attr:class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
-                                {t!(i18n, results_retake)}
+                                {i18n.t("results_retake")}
                             </A>
                             <A
                                 href="/"
                                 attr:class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
-                                {t!(i18n, results_home)}
+                                {i18n.t("results_home")}
                             </A>
                         </div>
                     </div>
