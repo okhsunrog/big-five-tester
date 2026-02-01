@@ -5,12 +5,11 @@ use leptos::prelude::*;
 /// Get system preferred color scheme
 #[cfg(target_arch = "wasm32")]
 fn get_system_theme() -> &'static str {
-    if let Some(window) = web_sys::window() {
-        if let Ok(Some(media)) = window.match_media("(prefers-color-scheme: dark)") {
-            if media.matches() {
-                return "dark";
-            }
-        }
+    if let Some(window) = web_sys::window()
+        && let Ok(Some(media)) = window.match_media("(prefers-color-scheme: dark)")
+        && media.matches()
+    {
+        return "dark";
     }
     "light"
 }
@@ -18,27 +17,26 @@ fn get_system_theme() -> &'static str {
 /// Apply theme to document
 #[cfg(target_arch = "wasm32")]
 fn apply_theme(theme: &str) {
-    if let Some(window) = web_sys::window() {
-        if let Some(document) = window.document() {
-            if let Some(html) = document.document_element() {
-                let _ = html.set_attribute("data-theme", theme);
-            }
-        }
+    if let Some(window) = web_sys::window()
+        && let Some(document) = window.document()
+        && let Some(html) = document.document_element()
+    {
+        let _ = html.set_attribute("data-theme", theme);
     }
 }
 
 /// Save theme preference to localStorage (None = auto/system)
 #[cfg(target_arch = "wasm32")]
 fn save_theme_preference(theme: Option<&str>) {
-    if let Some(window) = web_sys::window() {
-        if let Ok(Some(storage)) = window.local_storage() {
-            match theme {
-                Some(t) => {
-                    let _ = storage.set_item("theme", t);
-                }
-                None => {
-                    let _ = storage.remove_item("theme");
-                }
+    if let Some(window) = web_sys::window()
+        && let Ok(Some(storage)) = window.local_storage()
+    {
+        match theme {
+            Some(t) => {
+                let _ = storage.set_item("theme", t);
+            }
+            None => {
+                let _ = storage.remove_item("theme");
             }
         }
     }
@@ -47,12 +45,11 @@ fn save_theme_preference(theme: Option<&str>) {
 /// Load theme preference from localStorage (None = auto/system)
 #[cfg(target_arch = "wasm32")]
 fn load_theme_preference() -> Option<String> {
-    if let Some(window) = web_sys::window() {
-        if let Ok(Some(storage)) = window.local_storage() {
-            if let Ok(Some(theme)) = storage.get_item("theme") {
-                return Some(theme);
-            }
-        }
+    if let Some(window) = web_sys::window()
+        && let Ok(Some(storage)) = window.local_storage()
+        && let Ok(Some(theme)) = storage.get_item("theme")
+    {
+        return Some(theme);
     }
     None
 }

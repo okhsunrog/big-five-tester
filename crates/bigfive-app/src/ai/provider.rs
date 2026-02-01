@@ -1,11 +1,16 @@
 //! API provider implementations.
 
+use std::time::{Duration, Instant};
+
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, instrument, warn};
 
 use crate::config::{ApiConfig, Provider};
 
 use super::error::AnalysisError;
+
+/// Default timeout for API calls (3 minutes to allow for slow Claude Opus responses)
+const API_TIMEOUT: Duration = Duration::from_secs(180);
 
 /// Call an AI model with the given prompt.
 #[instrument(skip(api, prompt), fields(model = %model, max_tokens = %max_tokens, provider = ?api.provider))]
@@ -16,15 +21,21 @@ pub async fn call_model(
     max_tokens: u32,
 ) -> Result<String, AnalysisError> {
     debug!(prompt_len = prompt.len(), "Calling model");
+    let start = Instant::now();
     let result = match api.provider {
         Provider::Anthropic => call_anthropic(api, model, None, prompt, max_tokens).await,
         Provider::OpenAiCompatible => {
             call_openai_compatible(api, model, None, prompt, max_tokens).await
         }
     };
+    let elapsed = start.elapsed();
     match &result {
-        Ok(response) => info!(response_len = response.len(), "Model call succeeded"),
-        Err(e) => warn!(error = %e, "Model call failed"),
+        Ok(response) => info!(
+            response_len = response.len(),
+            elapsed_ms = elapsed.as_millis(),
+            "Model call succeeded"
+        ),
+        Err(e) => warn!(error = %e, elapsed_ms = elapsed.as_millis(), "Model call failed"),
     }
     result
 }
@@ -43,15 +54,21 @@ pub async fn call_model_with_system(
         user_len = user.len(),
         "Calling model with system prompt"
     );
+    let start = Instant::now();
     let result = match api.provider {
         Provider::Anthropic => call_anthropic(api, model, Some(system), user, max_tokens).await,
         Provider::OpenAiCompatible => {
             call_openai_compatible(api, model, Some(system), user, max_tokens).await
         }
     };
+    let elapsed = start.elapsed();
     match &result {
-        Ok(response) => info!(response_len = response.len(), "Model call succeeded"),
-        Err(e) => warn!(error = %e, "Model call failed"),
+        Ok(response) => info!(
+            response_len = response.len(),
+            elapsed_ms = elapsed.as_millis(),
+            "Model call succeeded"
+        ),
+        Err(e) => warn!(error = %e, elapsed_ms = elapsed.as_millis(), "Model call failed"),
     }
     result
 }
@@ -101,7 +118,10 @@ async fn call_anthropic(
         }],
     };
 
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(API_TIMEOUT)
+        .build()
+        .map_err(|e| AnalysisError::Request(e.to_string()))?;
     let response = client
         .post("https://api.anthropic.com/v1/messages")
         .header("x-api-key", &api_key)
@@ -192,7 +212,10 @@ async fn call_openai_compatible(
         messages,
     };
 
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(API_TIMEOUT)
+        .build()
+        .map_err(|e| AnalysisError::Request(e.to_string()))?;
     let response = client
         .post(api_url)
         .header("Authorization", format!("Bearer {}", api_key))

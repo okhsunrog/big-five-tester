@@ -31,7 +31,7 @@
   "results_ai_description": "Получите персонализированное AI-описание вашей личности на основе результатов теста.",
   "results_ai_button": "Сгенерировать AI-анализ",
   "results_ai_loading": "Анализируем вашу личность",
-  "results_ai_loading_hint": "Это может занять от 30 секунд до 1 минуты...",
+  "results_ai_loading_hint": "Обычно это занимает около минуты...",
   "results_ai_error": "Не удалось сгенерировать анализ",
   "results_ai_retry": "Попробовать снова",
   "results_ai_regenerate": "Сгенерировать заново",

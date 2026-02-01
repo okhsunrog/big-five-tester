@@ -11,6 +11,8 @@ pub mod i18n;
 pub mod ai;
 #[cfg(feature = "ssr")]
 pub mod config;
+#[cfg(feature = "ssr")]
+pub mod jobs;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]

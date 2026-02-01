@@ -108,9 +108,8 @@ pub fn LangToggle() -> AnyView {
 
     view! {
         <div class="relative">
-            {dropdown_button}
             // Dropdown menu
-            <Show when=move || is_open.get()>
+            {dropdown_button} <Show when=move || is_open.get()>
                 // Backdrop to close on click outside
                 <div class="fixed inset-0 z-10" on:click=close_dropdown />
 

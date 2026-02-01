@@ -31,7 +31,7 @@
   "results_ai_description": "Get a personalized AI-generated description of your personality based on your test results.",
   "results_ai_button": "Generate AI Analysis",
   "results_ai_loading": "Analyzing your personality",
-  "results_ai_loading_hint": "This may take 30 seconds to 1 minute...",
+  "results_ai_loading_hint": "This usually takes about a minute...",
   "results_ai_error": "Failed to generate analysis",
   "results_ai_retry": "Try Again",
   "results_ai_regenerate": "Regenerate",

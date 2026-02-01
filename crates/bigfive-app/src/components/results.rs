@@ -7,6 +7,7 @@ use leptos_i18n::{t, t_string};
 use leptos_router::components::A;
 use leptos_router::hooks::use_navigate;
 use pulldown_cmark::{Options, Parser, html};
+use serde::{Deserialize, Serialize};
 
 use crate::components::{LangToggle, ThemeToggle};
 use crate::i18n::{Locale, use_i18n};
@@ -15,6 +16,21 @@ use crate::i18n::{Locale, use_i18n};
 const STORAGE_KEY_PROFILE: &str = "bigfive_profile";
 #[cfg(target_arch = "wasm32")]
 const STORAGE_KEY_CONTEXT: &str = "bigfive_user_context";
+
+/// Polling interval in milliseconds
+#[cfg(target_arch = "wasm32")]
+const POLL_INTERVAL_MS: i32 = 3000;
+
+/// Status of a background analysis job (shared between server and client)
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum AnalysisStatus {
+    /// Job is queued or processing
+    Pending,
+    /// Job completed successfully with result
+    Complete(String),
+    /// Job failed with error message
+    Error(String),
+}
 
 /// Convert markdown text to HTML
 fn markdown_to_html(markdown: &str) -> String {
@@ -28,29 +44,92 @@ fn markdown_to_html(markdown: &str) -> String {
     html_output
 }
 
-// Server function for AI description generation
+/// Start an analysis job and return immediately with a job ID.
+/// The analysis runs in the background.
 #[server]
-pub async fn generate_description(
+pub async fn start_analysis(
     profile: PersonalityProfile,
     lang: String,
     user_context: Option<String>,
 ) -> Result<String, ServerFnError> {
-    use crate::ai;
+    use crate::jobs::{self, JobStatus};
 
     // Load .env file for local development
     dotenvy::dotenv().ok();
 
-    // Use the new AI pipeline
-    let description = ai::generate_analysis(&profile, user_context.as_deref(), &lang)
-        .await
-        .map_err(|e| ServerFnError::new(e.to_string()))?;
+    // Generate job ID and create job entry
+    let job_id = jobs::generate_job_id();
+    jobs::create_job(&job_id);
 
-    // Save description to file
-    if let Err(e) = save_description_to_file(&description, &lang, user_context.as_deref()) {
-        tracing::warn!("Failed to save description to file: {}", e);
+    tracing::info!(
+        job_id = %job_id,
+        lang = %lang,
+        has_context = user_context.is_some(),
+        "Starting background analysis job"
+    );
+
+    // Clone job_id for the spawned task
+    let job_id_clone = job_id.clone();
+
+    // Spawn background task
+    tokio::spawn(async move {
+        use crate::ai;
+
+        let start = std::time::Instant::now();
+        jobs::update_job_status(&job_id_clone, JobStatus::Processing);
+
+        match ai::generate_analysis(&profile, user_context.as_deref(), &lang).await {
+            Ok(description) => {
+                tracing::info!(
+                    job_id = %job_id_clone,
+                    elapsed_ms = start.elapsed().as_millis(),
+                    response_len = description.len(),
+                    "Background analysis completed"
+                );
+
+                // Save description to file
+                if let Err(e) =
+                    save_description_to_file(&description, &lang, user_context.as_deref())
+                {
+                    tracing::warn!("Failed to save description to file: {}", e);
+                }
+
+                jobs::update_job_status(&job_id_clone, JobStatus::Complete(description));
+            }
+            Err(e) => {
+                tracing::error!(
+                    job_id = %job_id_clone,
+                    error = %e,
+                    elapsed_ms = start.elapsed().as_millis(),
+                    "Background analysis failed"
+                );
+                jobs::update_job_status(&job_id_clone, JobStatus::Error(e.to_string()));
+            }
+        }
+    });
+
+    Ok(job_id)
+}
+
+/// Get the status of an analysis job.
+#[server]
+pub async fn get_analysis_status(job_id: String) -> Result<AnalysisStatus, ServerFnError> {
+    use crate::jobs::{self, JobStatus};
+
+    match jobs::get_job_status(&job_id) {
+        Some(JobStatus::Pending) | Some(JobStatus::Processing) => Ok(AnalysisStatus::Pending),
+        Some(JobStatus::Complete(result)) => {
+            // Clean up job after returning result
+            jobs::remove_job(&job_id);
+            Ok(AnalysisStatus::Complete(result))
+        }
+        Some(JobStatus::Error(err)) => {
+            // Clean up job after returning error
+            jobs::remove_job(&job_id);
+            Ok(AnalysisStatus::Error(err))
+        }
+        None => Ok(AnalysisStatus::Error("Job not found".to_string())),
     }
-
-    Ok(description)
 }
 
 /// Save generated description to a file in the analyses directory.
@@ -135,7 +214,7 @@ pub fn ResultsPage() -> impl IntoView {
         }
     });
 
-    // Request AI description
+    // Request AI description with polling
     let request_ai = move |_| {
         let Some(prof) = profile.get() else { return };
         let locale = i18n.get_locale();
@@ -155,15 +234,45 @@ pub fn ResultsPage() -> impl IntoView {
                 Locale::ru => "ru",
             };
 
-            match generate_description(prof, lang_str.to_string(), context_opt).await {
-                Ok(description) => {
-                    set_ai_description.set(Some(description));
-                }
+            // Start the analysis job
+            let job_id = match start_analysis(prof, lang_str.to_string(), context_opt).await {
+                Ok(id) => id,
                 Err(e) => {
                     set_ai_error.set(Some(e.to_string()));
+                    set_ai_loading.set(false);
+                    return;
+                }
+            };
+
+            // Poll for results
+            loop {
+                // Wait before polling
+                #[cfg(target_arch = "wasm32")]
+                {
+                    gloo_timers::future::TimeoutFuture::new(POLL_INTERVAL_MS as u32).await;
+                }
+
+                match get_analysis_status(job_id.clone()).await {
+                    Ok(AnalysisStatus::Complete(description)) => {
+                        set_ai_description.set(Some(description));
+                        set_ai_loading.set(false);
+                        break;
+                    }
+                    Ok(AnalysisStatus::Error(err)) => {
+                        set_ai_error.set(Some(err));
+                        set_ai_loading.set(false);
+                        break;
+                    }
+                    Ok(AnalysisStatus::Pending) => {
+                        // Continue polling
+                    }
+                    Err(e) => {
+                        set_ai_error.set(Some(e.to_string()));
+                        set_ai_loading.set(false);
+                        break;
+                    }
                 }
             }
-            set_ai_loading.set(false);
         });
     };
 
@@ -532,10 +641,10 @@ fn load_context() -> Option<String> {
 fn save_context(context: &str) {
     #[cfg(target_arch = "wasm32")]
     {
-        if let Some(window) = web_sys::window() {
-            if let Ok(Some(storage)) = window.local_storage() {
-                let _ = storage.set_item(STORAGE_KEY_CONTEXT, context);
-            }
+        if let Some(window) = web_sys::window()
+            && let Ok(Some(storage)) = window.local_storage()
+        {
+            let _ = storage.set_item(STORAGE_KEY_CONTEXT, context);
         }
     }
     #[cfg(not(target_arch = "wasm32"))]
