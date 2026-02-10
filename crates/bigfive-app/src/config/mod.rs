@@ -188,7 +188,7 @@ pub struct ModelPreset {
     /// Display name shown in UI
     pub display_name: String,
 
-    /// Model identifier (e.g., "claude-opus-4-5-20251101")
+    /// Model identifier (e.g., "claude-opus-4-6")
     pub model: String,
 
     /// Source language for analysis (model's "native" language)
@@ -204,6 +204,10 @@ pub struct ModelPreset {
 
     /// API configuration for this model
     pub api: ApiConfig,
+
+    /// Optional thinking configuration (Anthropic models only)
+    #[serde(default)]
+    pub thinking: Option<ThinkingConfig>,
 
     /// Optional translation configuration
     pub translation: Option<TranslationConfig>,
@@ -221,6 +225,53 @@ impl ModelPreset {
         }
 
         Ok(())
+    }
+}
+
+/// Thinking mode configuration for Anthropic models.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
+pub enum ThinkingConfig {
+    /// Adaptive thinking — Claude decides when and how much to think (Opus 4.6+).
+    /// No budget_tokens needed; use `effort` to guide thinking depth.
+    Adaptive {
+        /// Effort level for adaptive thinking. Default: high.
+        #[serde(default)]
+        effort: EffortLevel,
+    },
+    /// Manual thinking with explicit token budget (Sonnet 4.5, Sonnet 4, Haiku 4.5, etc.).
+    Enabled {
+        /// Token budget for thinking.
+        budget_tokens: u32,
+    },
+}
+
+/// Effort level for adaptive thinking.
+///
+/// Controls how much thinking Claude does in adaptive mode:
+/// - `max`: always thinks (Opus 4.6 only)
+/// - `high`: almost always thinks (default)
+/// - `medium`: moderate thinking, may skip for simple queries
+/// - `low`: minimizes thinking, skips for simple tasks
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, Default, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum EffortLevel {
+    Max,
+    #[default]
+    High,
+    Medium,
+    Low,
+}
+
+impl EffortLevel {
+    /// Get the effort level as a string for the API.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Max => "max",
+            Self::High => "high",
+            Self::Medium => "medium",
+            Self::Low => "low",
+        }
     }
 }
 

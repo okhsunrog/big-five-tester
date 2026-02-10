@@ -58,14 +58,18 @@ provider = "openai"
 api_key_env = "OPENROUTER_API_KEY"
 api_url = "https://openrouter.ai/api/v1/chat/completions"
 
-# --- Claude Opus 4.5 (English source, via Anthropic API, DEFAULT) ---
+# --- Claude Opus 4.6 with Adaptive Thinking (English source, via Anthropic API, DEFAULT) ---
 [[models]]
-id = "claude-opus-4.5"
-display_name = "Claude Opus 4.5"
-model = "claude-opus-4-5-20251101"
+id = "claude-opus-4.6"
+display_name = "Claude Opus 4.6"
+model = "claude-opus-4-6"
 source_lang = "en"
-max_tokens = 8192
+max_tokens = 16000
 default = true
+
+[models.thinking]
+type = "adaptive"
+effort = "high"
 
 [models.api]
 provider = "anthropic"

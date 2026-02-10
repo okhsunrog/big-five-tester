@@ -77,6 +77,7 @@ async fn check_safeguard(config: &AiConfig, user_context: &str) -> Result<(), An
         system,
         user_context,
         safeguard.max_tokens,
+        None, // No thinking for safeguard checks
     )
     .await?;
 
@@ -109,7 +110,7 @@ async fn generate_with_preset(
 
     let prompt = prompts::analysis_prompt(preset.source_lang, profile, user_context);
 
-    let analysis = call_model(&preset.api, &preset.model, &prompt, preset.max_tokens).await?;
+    let analysis = call_model(&preset.api, &preset.model, &prompt, preset.max_tokens, preset.thinking.as_ref()).await?;
 
     info!(analysis_len = analysis.len(), "Analysis generated");
 
@@ -143,6 +144,7 @@ async fn generate_with_preset(
         &translation.model,
         &translation_prompt,
         translation.max_tokens,
+        None, // No thinking for translation
     )
     .await?;
 
