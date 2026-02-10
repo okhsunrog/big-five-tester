@@ -597,7 +597,7 @@ pub fn ResultsPage() -> impl IntoView {
                                     let html_content = markdown_to_html(&description);
                                     view! {
                                         <div
-                                            class="prose prose-gray dark:prose-dark max-w-none mb-4 prose-headings:text-gray-800 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-strong:text-gray-800 dark:prose-strong:text-gray-100 prose-ul:text-gray-700 dark:prose-ul:text-gray-300 prose-li:text-gray-700 dark:prose-li:text-gray-300"
+                                            class="markdown max-w-none mb-4 text-gray-700 dark:text-gray-300"
                                             inner_html=html_content
                                         />
                                         <button

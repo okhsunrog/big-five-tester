@@ -1,6 +1,18 @@
-# Big Five Personality Test
+# Big Five Tester
 
-A Leptos fullstack application for taking the Big Five (IPIP-NEO-120) personality test with AI-powered analysis.
+A Rust + Leptos fullstack web app for taking the Big Five personality test (IPIP-NEO-120), calculating your scores (domains + facets), and optionally generating an AI-written narrative analysis.
+
+## Features
+
+- **IPIP-NEO-120** scoring (5 domains, 30 facets) via `crates/bigfive`
+- **Leptos fullstack app** (`crates/bigfive-app`) with an Axum SSR backend
+- **EN/RU test UI** with progress persisted in browser `localStorage`
+- **AI analysis pipeline** with:
+  - model presets from `ai_config.toml`
+  - providers: Anthropic API and OpenAI-compatible APIs (OpenRouter/OpenAI/Ollama/etc.)
+  - optional prompt-injection safeguard step
+  - optional translate step when model output language != UI language
+- **Analysis archiving**: AI output is saved as Markdown into `analyses/` (configurable via `ANALYSES_DIR`)
 
 ## Project Structure
 
@@ -9,21 +21,76 @@ big-five-tester/
 ├── crates/
 │   ├── bigfive/        # Core library for Big Five test scoring
 │   └── bigfive-app/    # Leptos fullstack application
+├── ai_config.toml      # AI model presets (see ai_config.example.toml)
+├── analyses/           # Saved AI analyses (Markdown)
+└── justfile            # Common dev/build/deploy commands
 ```
 
-## Development
+## Quickstart (Development)
 
 ### Prerequisites
 
-- Rust (with `wasm32-unknown-unknown` target)
-- [cargo-leptos](https://github.com/leptos-rs/cargo-leptos)
-- [Tailwind CSS](https://tailwindcss.com/)
+- Rust **nightly** (see `rust-toolchain.toml`) with the `wasm32-unknown-unknown` target
+- `cargo-leptos` (for `cargo leptos watch/build`)
+- `just` (optional, for the shortcuts in `justfile`)
+- No JS toolchain required: Tailwind is driven by `cargo-leptos` via the `tailwind-input-file` site parameter.
 
-### Formatting
+### Setup
 
-This project uses `rustfmt` and `leptosfmt` for code formatting.
+1) Configure API keys and AI presets:
 
-**Important:** You need to install `leptosfmt` from git (unreleased version) to get the fix for generic component formatting:
+```bash
+cp .env.example .env
+cp ai_config.example.toml ai_config.toml
+```
+
+3) Run the dev server (hot reload):
+
+```bash
+just run
+```
+
+Then open `http://127.0.0.1:3032`.
+
+## Configuration
+
+### `ai_config.toml`
+
+The app loads AI configuration from:
+
+- `AI_CONFIG_PATH` (if set), otherwise `./ai_config.toml`
+
+See `ai_config.example.toml` for a fully documented configuration file. You can define multiple `[[models]]` presets (these show up in the UI) and an optional `[safeguard]` model used for prompt-injection detection on user-provided context.
+
+### Environment variables
+
+Keys are read based on `api_key_env` in `ai_config.toml`. The included `.env.example` uses:
+
+- `OPENROUTER_API_KEY` (default for OpenAI-compatible presets in `ai_config.example.toml`)
+- `ANTHROPIC_API_KEY` (if you use Anthropic presets)
+- `AI_CONFIG_PATH` (optional)
+- `ANALYSES_DIR` (optional; defaults to `analyses`)
+
+Useful for debugging:
+
+- `RUST_LOG=info` (or `debug`, etc.)
+
+## Common commands
+
+This repo uses `just` (see `justfile`):
+
+```bash
+just run     # dev server (cargo leptos watch)
+just test    # cargo test
+just check   # fmt + clippy -D warnings + tests
+just build   # release build (frontend + backend)
+```
+
+## Formatting
+
+This project uses `rustfmt` and `leptosfmt`.
+
+**Important:** install `leptosfmt` from git (unreleased) to get the fix for generic component formatting:
 
 ```bash
 cargo install --git https://github.com/bram209/leptosfmt.git
@@ -37,13 +104,20 @@ cargo fmt
 leptosfmt crates/bigfive-app/src/**/*.rs
 ```
 
-### Running
+## Deployment (systemd)
 
-```bash
-cd crates/bigfive-app
-cargo leptos watch
-```
+There’s a simple deployment workflow baked into `justfile`:
 
-### Environment Variables
+- `just deploy` builds a release and syncs `target/release/bigfive-app` + `target/site/` to a remote host
+- `bigfive.service` is copied to `/etc/systemd/system/` and the service is restarted
 
-- `ANTHROPIC_API_KEY` - Required for AI-powered personality analysis
+The defaults assume:
+
+- remote host: `root@mira.local`
+- deploy dir: `/opt/bigfive`
+
+Adjust `server` / `deploy_dir` at the top of `justfile` to match your environment.
+
+## License
+
+MIT

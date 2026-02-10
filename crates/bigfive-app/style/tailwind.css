@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
 
 @source "../src/**/*.rs";
 @source "../*.html";
@@ -58,22 +57,111 @@ body {
   background-color: #f9fafb;
 }
 
-/* Prose dark mode for AI analysis */
-.prose-dark {
-  --tw-prose-body: #d1d5db;
-  --tw-prose-headings: #f9fafb;
-  --tw-prose-lead: #9ca3af;
-  --tw-prose-links: #818cf8;
-  --tw-prose-bold: #f9fafb;
-  --tw-prose-counters: #9ca3af;
-  --tw-prose-bullets: #4b5563;
-  --tw-prose-hr: #374151;
-  --tw-prose-quotes: #f3f4f6;
-  --tw-prose-quote-borders: #4b5563;
-  --tw-prose-captions: #9ca3af;
-  --tw-prose-code: #f9fafb;
-  --tw-prose-pre-code: #e5e7eb;
-  --tw-prose-pre-bg: #1f2937;
-  --tw-prose-th-borders: #4b5563;
-  --tw-prose-td-borders: #374151;
+/* Minimal Markdown typography for AI analysis (no JS Tailwind plugins needed). */
+.markdown {
+  line-height: 1.75;
+}
+
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown p {
+  margin: 0.75rem 0;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.markdown h1 {
+  font-size: 1.5rem;
+}
+
+.markdown h2 {
+  font-size: 1.25rem;
+}
+
+.markdown h3 {
+  font-size: 1.125rem;
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
+}
+
+.markdown ul {
+  list-style: disc;
+}
+
+.markdown ol {
+  list-style: decimal;
+}
+
+.markdown li {
+  margin: 0.25rem 0;
+}
+
+.markdown a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown a:hover {
+  color: var(--color-primary-hover);
+}
+
+.markdown blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 4px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.markdown hr {
+  margin: 1.5rem 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.markdown code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.95em;
+  padding: 0.1rem 0.25rem;
+  border-radius: 0.25rem;
+  background: rgba(79, 70, 229, 0.08);
+}
+
+.markdown pre {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  background: rgba(31, 41, 55, 0.06);
+  border: 1px solid var(--color-border);
+}
+
+.markdown pre code {
+  padding: 0;
+  background: transparent;
+}
+
+[data-theme="dark"] .markdown pre {
+  background: rgba(31, 41, 55, 0.65);
+}
+
+[data-theme="dark"] .markdown code {
+  background: rgba(99, 102, 241, 0.18);
 }
