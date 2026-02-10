@@ -89,14 +89,18 @@ fn switch_locale_in_path(path: &str, new_locale: Locale) -> String {
 pub fn I18nProvider(children: Children) -> impl IntoView {
     let location = use_location();
 
-    // Create locale signal based on URL
-    let locale = RwSignal::new(Locale::En);
+    // Initialize with correct locale from URL immediately (prevents blinking on load)
+    let initial_locale = Locale::from_path(&location.pathname.get_untracked());
+    let locale = RwSignal::new(initial_locale);
 
-    // Update locale when URL changes
+    // Update locale when URL changes (for navigation)
     Effect::new(move |_| {
         let path = location.pathname.get();
         let detected = Locale::from_path(&path);
-        locale.set(detected);
+        // Only update if locale actually changed to prevent unnecessary re-renders
+        if detected != locale.get_untracked() {
+            locale.set(detected);
+        }
     });
 
     let ctx = I18nContext { locale };

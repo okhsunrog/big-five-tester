@@ -8,16 +8,7 @@ use crate::i18n::use_i18n;
 
 /// Domain trait with description.
 #[component]
-fn DomainItem(name: &'static str, description: &'static str) -> impl IntoView {
-    let color = match name {
-        "Neuroticism" => "bg-red-500",
-        "Extraversion" => "bg-yellow-500",
-        "Openness" => "bg-purple-500",
-        "Agreeableness" => "bg-green-500",
-        "Conscientiousness" => "bg-blue-500",
-        _ => "bg-gray-500",
-    };
-
+fn DomainItem(color: &'static str, name: &'static str, description: &'static str) -> impl IntoView {
     view! {
         <div class="flex items-start">
             <div class=format!("w-3 h-3 rounded-full {} mt-1.5 mr-3 flex-shrink-0", color) />
@@ -37,18 +28,18 @@ fn DomainList() -> impl IntoView {
     // Get translations once per render (reactive via locale signal)
     let domains = Memo::new(move |_| {
         vec![
-            ("Neuroticism", i18n.t("domain_n_desc")),
-            ("Extraversion", i18n.t("domain_e_desc")),
-            ("Openness", i18n.t("domain_o_desc")),
-            ("Agreeableness", i18n.t("domain_a_desc")),
-            ("Conscientiousness", i18n.t("domain_c_desc")),
+            ("bg-red-500", i18n.t("domain_neuroticism"), i18n.t("domain_n_desc")),
+            ("bg-yellow-500", i18n.t("domain_extraversion"), i18n.t("domain_e_desc")),
+            ("bg-purple-500", i18n.t("domain_openness"), i18n.t("domain_o_desc")),
+            ("bg-green-500", i18n.t("domain_agreeableness"), i18n.t("domain_a_desc")),
+            ("bg-blue-500", i18n.t("domain_conscientiousness"), i18n.t("domain_c_desc")),
         ]
     });
 
     view! {
         <div class="space-y-4">
-            <For each=move || domains.get() key=|(name, _)| *name let:item>
-                <DomainItem name=item.0 description=item.1 />
+            <For each=move || domains.get() key=|(color, name, _)| format!("{}{}", color, name) let:item>
+                <DomainItem color=item.0 name=item.1 description=item.2 />
             </For>
         </div>
     }
