@@ -57,8 +57,8 @@ pub fn ThemeToggle() -> AnyView {
     Effect::new(move |_| {
         #[cfg(target_arch = "wasm32")]
         {
-            let current_mode = load_theme_preference()
-                .unwrap_or_else(|| get_system_theme().to_string());
+            let current_mode =
+                load_theme_preference().unwrap_or_else(|| get_system_theme().to_string());
             set_mode.set(current_mode.clone());
             apply_theme(&current_mode);
         }

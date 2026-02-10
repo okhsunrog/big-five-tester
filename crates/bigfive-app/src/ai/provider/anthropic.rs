@@ -151,9 +151,12 @@ fn build_thinking_params(
             };
             (Some(ThinkingParam::Adaptive), output_config)
         }
-        Some(ThinkingConfig::Enabled { budget_tokens }) => {
-            (Some(ThinkingParam::Enabled { budget_tokens: *budget_tokens }), None)
-        }
+        Some(ThinkingConfig::Enabled { budget_tokens }) => (
+            Some(ThinkingParam::Enabled {
+                budget_tokens: *budget_tokens,
+            }),
+            None,
+        ),
         None => (None, None),
     }
 }

@@ -28,11 +28,31 @@ fn DomainList() -> impl IntoView {
     // Get translations once per render (reactive via locale signal)
     let domains = Memo::new(move |_| {
         vec![
-            ("bg-red-500", i18n.t("domain_neuroticism"), i18n.t("domain_n_desc")),
-            ("bg-yellow-500", i18n.t("domain_extraversion"), i18n.t("domain_e_desc")),
-            ("bg-purple-500", i18n.t("domain_openness"), i18n.t("domain_o_desc")),
-            ("bg-green-500", i18n.t("domain_agreeableness"), i18n.t("domain_a_desc")),
-            ("bg-blue-500", i18n.t("domain_conscientiousness"), i18n.t("domain_c_desc")),
+            (
+                "bg-red-500",
+                i18n.t("domain_neuroticism"),
+                i18n.t("domain_n_desc"),
+            ),
+            (
+                "bg-yellow-500",
+                i18n.t("domain_extraversion"),
+                i18n.t("domain_e_desc"),
+            ),
+            (
+                "bg-purple-500",
+                i18n.t("domain_openness"),
+                i18n.t("domain_o_desc"),
+            ),
+            (
+                "bg-green-500",
+                i18n.t("domain_agreeableness"),
+                i18n.t("domain_a_desc"),
+            ),
+            (
+                "bg-blue-500",
+                i18n.t("domain_conscientiousness"),
+                i18n.t("domain_c_desc"),
+            ),
         ]
     });
 

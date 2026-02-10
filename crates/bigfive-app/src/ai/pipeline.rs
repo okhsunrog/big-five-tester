@@ -110,7 +110,14 @@ async fn generate_with_preset(
 
     let prompt = prompts::analysis_prompt(preset.source_lang, profile, user_context);
 
-    let analysis = call_model(&preset.api, &preset.model, &prompt, preset.max_tokens, preset.thinking.as_ref()).await?;
+    let analysis = call_model(
+        &preset.api,
+        &preset.model,
+        &prompt,
+        preset.max_tokens,
+        preset.thinking.as_ref(),
+    )
+    .await?;
 
     info!(analysis_len = analysis.len(), "Analysis generated");
 

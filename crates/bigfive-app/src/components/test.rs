@@ -150,7 +150,7 @@ pub fn TestPage() -> impl IntoView {
             <div class="mb-8">
                 <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
                     <span>
-                        {move || { format!("{} {}/120", i18n.t("test_question").to_string(), current_index.get() + 1) }}
+                        {move || { format!("{} {}/120", i18n.t("test_question"), current_index.get() + 1) }}
                     </span>
                     <span>{move || { format!("{}%", ((current_index.get() + 1) as f32 / 120.0 * 100.0) as u8) }}</span>
                 </div>
@@ -273,7 +273,7 @@ pub fn TestPage() -> impl IntoView {
             <div class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 {move || {
                     let answered = answers.get().len();
-                    format!("{}: {}/120", i18n.t("test_answered").to_string(), answered)
+                    format!("{}: {}/120", i18n.t("test_answered"), answered)
                 }}
             </div>
         </div>

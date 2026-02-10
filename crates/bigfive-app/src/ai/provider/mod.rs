@@ -31,9 +31,7 @@ pub async fn call_model(
         Provider::Anthropic => {
             anthropic::call(api, model, None, prompt, max_tokens, thinking).await
         }
-        Provider::OpenAiCompatible => {
-            openai::call(api, model, None, prompt, max_tokens).await
-        }
+        Provider::OpenAiCompatible => openai::call(api, model, None, prompt, max_tokens).await,
     };
     let elapsed = start.elapsed();
     match &result {

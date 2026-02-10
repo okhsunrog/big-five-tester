@@ -11,12 +11,17 @@ pub const BUILD_TIME: &str = env!("BUILD_TIME");
 #[tokio::main]
 async fn main() {
     use axum::Router;
-    use axum::response::Json;
+    use axum::extract::Request;
+    use axum::middleware::{self, Next};
+    use axum::response::{IntoResponse, Json};
     use axum::routing::get;
+    use axum_governor::GovernorLayer;
     use bigfive_app::app::*;
     use bigfive_app::config::get_config;
+    use lazy_limit::{Duration, RuleConfig, init_rate_limiter};
     use leptos::prelude::*;
     use leptos_axum::{LeptosRoutes, generate_route_list};
+    use real::{RealIp, RealIpLayer};
     use serde_json::json;
     use tracing::info;
     use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
@@ -79,6 +84,27 @@ async fn main() {
         }))
     }
 
+    // Rate limiting configuration (per IP):
+    // - Default: 60 requests per 10 seconds (generous for normal browsing)
+    // - AI analysis: 2 requests per minute (protects expensive API calls)
+    init_rate_limiter!(
+        default: RuleConfig::new(Duration::seconds(10), 60),
+        routes: [
+            ("/api/start_analysis", RuleConfig::new(Duration::seconds(60), 2))
+        ]
+    )
+    .await;
+    info!("Rate limiting enabled: 60 req/10s default, 2 req/min for AI analysis");
+
+    // Logging middleware that captures real IP
+    async fn log_request(req: Request, next: Next) -> impl IntoResponse {
+        let ip = req.extensions().get::<RealIp>().map(|r| r.0);
+        let method = req.method().clone();
+        let uri = req.uri().clone();
+        tracing::info!(%method, %uri, ?ip, "request");
+        next.run(req).await
+    }
+
     let app = Router::new()
         .route("/api/version", get(version_handler))
         .leptos_routes(&leptos_options, routes, {
@@ -86,6 +112,12 @@ async fn main() {
             move || shell(leptos_options.clone())
         })
         .fallback(leptos_axum::file_and_error_handler(shell))
+        .layer(middleware::from_fn(log_request))
+        .layer(
+            tower::ServiceBuilder::new()
+                .layer(RealIpLayer::default())
+                .layer(GovernorLayer::default()),
+        )
         .with_state(leptos_options);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
