@@ -250,6 +250,9 @@ pub fn ResultsPage() -> impl IntoView {
     // "Not found" state for invalid shared links
     let (not_found, set_not_found) = signal(false);
 
+    // Whether the current user owns these results (loaded from localStorage)
+    let (is_owner, set_is_owner) = signal(false);
+
     // Load available models from server (Resource runs on both server and client)
     let models_resource =
         Resource::new(|| (), |_| async move { get_available_models().await.ok() });
@@ -302,7 +305,8 @@ pub fn ResultsPage() -> impl IntoView {
                 }
             });
         } else {
-            // Load from localStorage
+            // Load from localStorage (owner)
+            set_is_owner.set(true);
             let loaded = load_profile();
             if loaded.is_none() {
                 let prefix = i18n.get_locale().path_prefix();
@@ -737,25 +741,33 @@ pub fn ResultsPage() -> impl IntoView {
                                             class="markdown max-w-none mb-4 text-gray-700 dark:text-gray-300"
                                             inner_html=html_content
                                         />
-                                        <button
-                                            on:click=move |_| set_ai_description.set(None)
-                                            class="no-print px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
-                                        >
-                                            <svg
-                                                class="w-4 h-4 mr-2"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                                />
-                                            </svg>
-                                            {i18n.t("results_ai_regenerate")}
-                                        </button>
+                                        {move || {
+                                            if is_owner.get() {
+                                                view! {
+                                                    <button
+                                                        on:click=move |_| set_ai_description.set(None)
+                                                        class="no-print px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
+                                                    >
+                                                        <svg
+                                                            class="w-4 h-4 mr-2"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                                            />
+                                                        </svg>
+                                                        {i18n.t("results_ai_regenerate")}
+                                                    </button>
+                                                }.into_any()
+                                            } else {
+                                                view! { <div /> }.into_any()
+                                            }
+                                        }}
                                     }
                                         .into_any()
                                 } else if ai_loading.get() {
@@ -825,7 +837,7 @@ pub fn ResultsPage() -> impl IntoView {
                                         </button>
                                     }
                                         .into_any()
-                                } else {
+                                } else if is_owner.get() {
                                     view! {
                                         <p class="no-print text-gray-600 dark:text-gray-300 mb-4">
                                             {i18n.t("results_ai_description")}
@@ -904,6 +916,14 @@ pub fn ResultsPage() -> impl IntoView {
                                             </svg>
                                             {i18n.t("results_ai_button")}
                                         </button>
+                                    }
+                                        .into_any()
+                                } else {
+                                    // Viewer (not owner) — no AI analysis generated yet
+                                    view! {
+                                        <p class="text-gray-500 dark:text-gray-400 italic">
+                                            {i18n.t("results_ai_not_generated")}
+                                        </p>
                                     }
                                         .into_any()
                                 }

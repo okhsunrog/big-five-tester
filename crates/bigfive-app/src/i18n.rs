@@ -269,6 +269,9 @@ pub fn t(locale: Locale, key: &str) -> &'static str {
         (Locale::En, "results_not_found") => "Results not found",
         (Locale::Ru, "results_not_found") => "Результаты не найдены",
 
+        (Locale::En, "results_ai_not_generated") => "AI analysis has not been generated yet.",
+        (Locale::Ru, "results_ai_not_generated") => "AI-анализ ещё не был сгенерирован.",
+
         // Score levels
         (Locale::En, "level_low") => "Low",
         (Locale::Ru, "level_low") => "Низкий",
