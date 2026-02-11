@@ -260,6 +260,15 @@ pub fn t(locale: Locale, key: &str) -> &'static str {
         (Locale::En, "results_export_pdf") => "Export as PDF",
         (Locale::Ru, "results_export_pdf") => "Экспорт в PDF",
 
+        (Locale::En, "results_copy_link") => "Copy Link",
+        (Locale::Ru, "results_copy_link") => "Скопировать ссылку",
+
+        (Locale::En, "results_link_copied") => "Copied!",
+        (Locale::Ru, "results_link_copied") => "Скопировано!",
+
+        (Locale::En, "results_not_found") => "Results not found",
+        (Locale::Ru, "results_not_found") => "Результаты не найдены",
+
         // Score levels
         (Locale::En, "level_low") => "Low",
         (Locale::Ru, "level_low") => "Низкий",

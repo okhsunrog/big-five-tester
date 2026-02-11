@@ -31,7 +31,8 @@ ssr = [
     "dep:lazy-limit",
     "dep:real",
     "dep:tower",
-
+    "dep:turso",
+    "dep:anyhow",
 ]
 
 [dependencies]
@@ -49,7 +50,7 @@ thiserror = { version = "2", optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 wasm-bindgen = "0.2"
-web-sys = { version = "0.3", features = ["Window", "Storage", "Navigator", "Location", "MediaQueryList"] }
+web-sys = { version = "0.3", features = ["Window", "Storage", "Navigator", "Location", "MediaQueryList", "Clipboard"] }
 console_error_panic_hook = "0.1"
 pulldown-cmark = "0.13.0"
 tracing = { version = "0.1.44", features = ["log"] }
@@ -62,6 +63,8 @@ axum-governor = { version = "1.0.3", optional = true }
 lazy-limit = { version = "1.0.3", optional = true }
 real = { version = "0.1.4", features = ["axum"], optional = true }
 tower = { version = "0.5.3", optional = true }
+turso = { version = "0.4.4", optional = true }
+anyhow = { version = "1.0.101", optional = true }
 
 [build-dependencies]
 chrono = "0.4.43"

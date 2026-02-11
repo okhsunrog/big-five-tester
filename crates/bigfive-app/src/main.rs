@@ -39,6 +39,12 @@ async fn main() {
         VERSION, GIT_HASH, BUILD_TIME
     );
 
+    // Initialize database
+    let db_path = std::env::var("DATABASE_PATH").unwrap_or_else(|_| "data/bigfive.db".to_string());
+    bigfive_app::db::init_database(&db_path)
+        .await
+        .expect("Failed to initialize database");
+
     // Load and display AI configuration
     match get_config() {
         Ok(config) => {

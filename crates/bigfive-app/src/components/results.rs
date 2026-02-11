@@ -4,7 +4,7 @@ use bigfive::{Domain, Facet, PersonalityProfile, ScoreLevel};
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::A;
-use leptos_router::hooks::use_navigate;
+use leptos_router::hooks::{use_navigate, use_params_map};
 use pulldown_cmark::{Options, Parser, html};
 use serde::{Deserialize, Serialize};
 
@@ -43,6 +43,16 @@ pub struct ClientModelInfo {
     pub default: bool,
 }
 
+/// Saved result data (shared between server and client).
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SavedResultData {
+    pub id: String,
+    pub profile: PersonalityProfile,
+    pub user_context: Option<String>,
+    pub ai_analysis: Option<String>,
+    pub lang: String,
+}
+
 /// Get available model presets for the client.
 #[server]
 pub async fn get_available_models() -> Result<Vec<ClientModelInfo>, ServerFnError> {
@@ -70,6 +80,55 @@ fn markdown_to_html(markdown: &str) -> String {
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
     html_output
+}
+
+/// Save results to database, returns UUID.
+#[server]
+pub async fn save_results(
+    profile: PersonalityProfile,
+    user_context: Option<String>,
+    lang: String,
+) -> Result<String, ServerFnError> {
+    use crate::db;
+
+    let id = uuid::Uuid::new_v4().to_string();
+    db::save_result(&id, &profile, user_context.as_deref(), &lang)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?;
+
+    tracing::info!(result_id = %id, "Saved test results to database");
+    Ok(id)
+}
+
+/// Get saved results from database.
+#[server]
+pub async fn get_saved_results(id: String) -> Result<Option<SavedResultData>, ServerFnError> {
+    use crate::db;
+
+    let result = db::get_result(&id)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?;
+
+    Ok(result.map(|r| SavedResultData {
+        id: r.id,
+        profile: r.profile,
+        user_context: r.user_context,
+        ai_analysis: r.ai_analysis,
+        lang: r.lang,
+    }))
+}
+
+/// Update AI analysis in database.
+#[server]
+pub async fn update_saved_analysis(id: String, analysis: String) -> Result<(), ServerFnError> {
+    use crate::db;
+
+    db::update_ai_analysis(&id, &analysis)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?;
+
+    tracing::info!(result_id = %id, "Updated AI analysis in database");
+    Ok(())
 }
 
 /// Start an analysis job and return immediately with a job ID.
@@ -216,9 +275,17 @@ fn save_description_to_file(
 pub fn ResultsPage() -> impl IntoView {
     let i18n = use_i18n();
     let navigate = use_navigate();
+    let params = use_params_map();
 
     // Profile state - starts as None, loaded via Effect to avoid hydration mismatch
     let (profile, set_profile) = signal::<Option<PersonalityProfile>>(None);
+
+    // Saved result ID (UUID) — set after saving to DB or loading from URL
+    let (result_id, set_result_id) = signal::<Option<String>>(None);
+
+    // "Copied!" feedback state
+    #[allow(unused_variables)]
+    let (link_copied, set_link_copied) = signal(false);
 
     // Expanded domain state (for facet accordion)
     let (expanded_domain, set_expanded_domain) = signal::<Option<Domain>>(None);
@@ -230,6 +297,9 @@ pub fn ResultsPage() -> impl IntoView {
 
     // User context for AI (optional self-description)
     let (user_context, set_user_context) = signal(String::new());
+
+    // "Not found" state for invalid shared links
+    let (not_found, set_not_found) = signal(false);
 
     // Load available models from server (Resource runs on both server and client)
     let models_resource =
@@ -254,17 +324,79 @@ pub fn ResultsPage() -> impl IntoView {
         }
     });
 
-    // Load profile and context from localStorage after hydration
+    // Load profile: from DB (if :id param) or from localStorage (then auto-save to DB)
     Effect::new(move |_| {
-        let loaded = load_profile();
-        if loaded.is_none() {
-            let prefix = i18n.get_locale().path_prefix();
-            navigate(&format!("{}/test", prefix), Default::default());
+        let url_id = params.get().get("id");
+
+        if let Some(id) = url_id {
+            // Load from database
+            let nav = navigate.clone();
+            let prefix = i18n.get_locale().path_prefix().to_string();
+            spawn_local(async move {
+                match get_saved_results(id).await {
+                    Ok(Some(saved)) => {
+                        set_result_id.set(Some(saved.id));
+                        set_profile.set(Some(saved.profile));
+                        if let Some(ctx) = saved.user_context {
+                            set_user_context.set(ctx);
+                        }
+                        if let Some(analysis) = saved.ai_analysis {
+                            set_ai_description.set(Some(analysis));
+                        }
+                    }
+                    Ok(None) => {
+                        set_not_found.set(true);
+                    }
+                    Err(_) => {
+                        nav(&format!("{}/test", prefix), Default::default());
+                    }
+                }
+            });
         } else {
-            set_profile.set(loaded);
-        }
-        if let Some(ctx) = load_context() {
-            set_user_context.set(ctx);
+            // Load from localStorage
+            let loaded = load_profile();
+            if loaded.is_none() {
+                let prefix = i18n.get_locale().path_prefix();
+                navigate(&format!("{}/test", prefix), Default::default());
+                return;
+            }
+            let prof = loaded.unwrap();
+            set_profile.set(Some(prof.clone()));
+
+            if let Some(ctx) = load_context() {
+                set_user_context.set(ctx.clone());
+            }
+
+            // Auto-save to DB and navigate to shareable URL
+            let nav = navigate.clone();
+            let locale = i18n.get_locale();
+            let ctx = load_context();
+            spawn_local(async move {
+                match save_results(prof, ctx, locale.code().to_string()).await {
+                    Ok(id) => {
+                        set_result_id.set(Some(id.clone()));
+                        // Replace URL with shareable link
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            if let Some(window) = web_sys::window() {
+                                let new_url = format!("{}/results/{}", locale.path_prefix(), id);
+                                let _ = window.history().and_then(|h| {
+                                    h.replace_state_with_url(
+                                        &wasm_bindgen::JsValue::NULL,
+                                        "",
+                                        Some(&new_url),
+                                    )
+                                });
+                            }
+                        }
+                        let _ = nav;
+                    }
+                    Err(_e) => {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(&format!("Failed to save results: {}", _e).into());
+                    }
+                }
+            });
         }
     });
 
@@ -282,6 +414,7 @@ pub fn ResultsPage() -> impl IntoView {
         } else {
             Some(context)
         };
+        let current_result_id = result_id.get();
 
         set_ai_loading.set(true);
         set_ai_error.set(None);
@@ -352,8 +485,13 @@ pub fn ResultsPage() -> impl IntoView {
                         web_sys::console::log_1(
                             &format!("Got complete result, len={}", description.len()).into(),
                         );
-                        set_ai_description.set(Some(description));
+                        set_ai_description.set(Some(description.clone()));
                         set_ai_loading.set(false);
+
+                        // Persist to DB
+                        if let Some(rid) = current_result_id.clone() {
+                            let _ = update_saved_analysis(rid, description).await;
+                        }
                         break;
                     }
                     Ok(AnalysisStatus::Error(err)) => {
@@ -378,6 +516,31 @@ pub fn ResultsPage() -> impl IntoView {
                 }
             }
         });
+    };
+
+    // Copy link to clipboard
+    #[allow(unused_variables)]
+    let copy_link = move |_| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(id) = result_id.get() {
+                if let Some(window) = web_sys::window() {
+                    let origin = window.location().origin().unwrap_or_default();
+                    let prefix = i18n.get_locale().path_prefix();
+                    let url = format!("{}{}/results/{}", origin, prefix, id);
+
+                    let clipboard = window.navigator().clipboard();
+                    let _ = clipboard.write_text(&url);
+
+                    set_link_copied.set(true);
+                    // Reset after 2 seconds
+                    spawn_local(async move {
+                        gloo_timers::future::TimeoutFuture::new(2000).await;
+                        set_link_copied.set(false);
+                    });
+                }
+            }
+        }
     };
 
     // Toggle domain expansion
@@ -475,6 +638,22 @@ pub fn ResultsPage() -> impl IntoView {
             </header>
 
             {move || {
+                if not_found.get() {
+                    return view! {
+                        <div class="text-center py-12">
+                            <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+                                {i18n.t("results_not_found")}
+                            </p>
+                            <A
+                                href=move || i18n.get_locale().path_prefix().to_string()
+                                attr:class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+                            >
+                                {i18n.t("results_home")}
+                            </A>
+                        </div>
+                    }.into_any();
+                }
+
                 let Some(prof) = profile.get() else {
                     return view! { <div>"Loading..."</div> }.into_any();
                 };
@@ -776,6 +955,29 @@ pub fn ResultsPage() -> impl IntoView {
 
                         // Actions
                         <div class="no-print flex flex-wrap gap-4">
+                            // Copy Link button
+                            <button
+                                on:click=copy_link
+                                class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center"
+                            >
+                                {move || {
+                                    if link_copied.get() {
+                                        view! {
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        }.into_any()
+                                    } else {
+                                        view! {
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                            </svg>
+                                        }.into_any()
+                                    }
+                                }}
+                                {move || if link_copied.get() { i18n.t("results_link_copied") } else { i18n.t("results_copy_link") }}
+                            </button>
+                            // Export as PDF
                             <button
                                 on:click=move |_| {
                                     #[cfg(target_arch = "wasm32")]
@@ -785,7 +987,7 @@ pub fn ResultsPage() -> impl IntoView {
                                         }
                                     }
                                 }
-                                class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center"
+                                class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
                             >
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path

@@ -76,6 +76,7 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("") view=HomePage />
                     <Route path=path!("test") view=TestPage />
                     <Route path=path!("results") view=ResultsPage />
+                    <Route path=path!("results/:id") view=ResultsPage />
                 </ParentRoute>
 
                 // Russian routes
@@ -83,6 +84,7 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("") view=HomePage />
                     <Route path=path!("test") view=TestPage />
                     <Route path=path!("results") view=ResultsPage />
+                    <Route path=path!("results/:id") view=ResultsPage />
                 </ParentRoute>
 
                 // Root redirect to /en
