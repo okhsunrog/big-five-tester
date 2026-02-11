@@ -2,5 +2,8 @@
 .env
 ai_config.toml
 /analyses
+/scripts
 node_modules
-big-five-tester-prompt.md
+.crush/
+.claude/
+.ruff_cache/
