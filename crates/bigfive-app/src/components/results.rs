@@ -82,21 +82,28 @@ fn markdown_to_html(markdown: &str) -> String {
     html_output
 }
 
-/// Save results to database, returns UUID.
+/// Save a results snapshot to database, returns UUID.
 #[server]
 pub async fn save_results(
     profile: PersonalityProfile,
     user_context: Option<String>,
+    ai_analysis: Option<String>,
     lang: String,
 ) -> Result<String, ServerFnError> {
     use crate::db;
 
     let id = uuid::Uuid::new_v4().to_string();
-    db::save_result(&id, &profile, user_context.as_deref(), &lang)
-        .await
-        .map_err(|e| ServerFnError::new(e.to_string()))?;
+    db::save_result(
+        &id,
+        &profile,
+        user_context.as_deref(),
+        ai_analysis.as_deref(),
+        &lang,
+    )
+    .await
+    .map_err(|e| ServerFnError::new(e.to_string()))?;
 
-    tracing::info!(result_id = %id, "Saved test results to database");
+    tracing::info!(result_id = %id, "Saved results snapshot to database");
     Ok(id)
 }
 
@@ -118,19 +125,6 @@ pub async fn get_saved_results(id: String) -> Result<Option<SavedResultData>, Se
     }))
 }
 
-/// Update AI analysis in database.
-#[server]
-pub async fn update_saved_analysis(id: String, analysis: String) -> Result<(), ServerFnError> {
-    use crate::db;
-
-    db::update_ai_analysis(&id, &analysis)
-        .await
-        .map_err(|e| ServerFnError::new(e.to_string()))?;
-
-    tracing::info!(result_id = %id, "Updated AI analysis in database");
-    Ok(())
-}
-
 /// Start an analysis job and return immediately with a job ID.
 /// The analysis runs in the background.
 #[server]
@@ -139,7 +133,6 @@ pub async fn start_analysis(
     lang: String,
     user_context: Option<String>,
     model_id: String,
-    result_id: Option<String>,
 ) -> Result<String, ServerFnError> {
     use crate::jobs::{self, JobStatus};
 
@@ -176,10 +169,6 @@ pub async fn start_analysis(
                     response_len = description.len(),
                     "Background analysis completed"
                 );
-
-                if let Some(rid) = &result_id {
-                    tracing::info!("Results link: /{}/results/{}", lang, rid);
-                }
 
                 jobs::update_job_status(&job_id_clone, JobStatus::Complete(description));
             }
@@ -229,12 +218,11 @@ pub fn ResultsPage() -> impl IntoView {
     // Profile state - starts as None, loaded via Effect to avoid hydration mismatch
     let (profile, set_profile) = signal::<Option<PersonalityProfile>>(None);
 
-    // Saved result ID (UUID) — set after saving to DB or loading from URL
-    let (result_id, set_result_id) = signal::<Option<String>>(None);
-
-    // "Copied!" feedback state
+    // "Copied!" / "Saving..." feedback state
     #[allow(unused_variables)]
     let (link_copied, set_link_copied) = signal(false);
+    #[allow(unused_variables)]
+    let (share_saving, set_share_saving) = signal(false);
 
     // Expanded domain state (for facet accordion)
     let (expanded_domain, set_expanded_domain) = signal::<Option<Domain>>(None);
@@ -250,8 +238,8 @@ pub fn ResultsPage() -> impl IntoView {
     // "Not found" state for invalid shared links
     let (not_found, set_not_found) = signal(false);
 
-    // Whether the current user owns these results (loaded from localStorage)
-    let (is_owner, set_is_owner) = signal(false);
+    // Whether this is a viewer (opened shared link with :id)
+    let is_viewer = Memo::new(move |_| params.get().get("id").is_some());
 
     // Load available models from server (Resource runs on both server and client)
     let models_resource =
@@ -276,18 +264,17 @@ pub fn ResultsPage() -> impl IntoView {
         }
     });
 
-    // Load profile: from DB (if :id param) or from localStorage (then auto-save to DB)
+    // Load profile: from DB (if :id param) or from localStorage
     Effect::new(move |_| {
         let url_id = params.get().get("id");
 
         if let Some(id) = url_id {
-            // Load from database
+            // Viewer: load from database
             let nav = navigate.clone();
             let prefix = i18n.get_locale().path_prefix().to_string();
             spawn_local(async move {
                 match get_saved_results(id).await {
                     Ok(Some(saved)) => {
-                        set_result_id.set(Some(saved.id));
                         set_profile.set(Some(saved.profile));
                         if let Some(ctx) = saved.user_context {
                             set_user_context.set(ctx);
@@ -305,51 +292,18 @@ pub fn ResultsPage() -> impl IntoView {
                 }
             });
         } else {
-            // Load from localStorage (owner)
-            set_is_owner.set(true);
+            // Owner: load from localStorage
             let loaded = load_profile();
             if loaded.is_none() {
                 let prefix = i18n.get_locale().path_prefix();
                 navigate(&format!("{}/test", prefix), Default::default());
                 return;
             }
-            let prof = loaded.unwrap();
-            set_profile.set(Some(prof.clone()));
+            set_profile.set(Some(loaded.unwrap()));
 
             if let Some(ctx) = load_context() {
-                set_user_context.set(ctx.clone());
+                set_user_context.set(ctx);
             }
-
-            // Auto-save to DB and navigate to shareable URL
-            let nav = navigate.clone();
-            let locale = i18n.get_locale();
-            let ctx = load_context();
-            spawn_local(async move {
-                match save_results(prof, ctx, locale.code().to_string()).await {
-                    Ok(id) => {
-                        set_result_id.set(Some(id.clone()));
-                        // Replace URL with shareable link
-                        #[cfg(target_arch = "wasm32")]
-                        {
-                            if let Some(window) = web_sys::window() {
-                                let new_url = format!("{}/results/{}", locale.path_prefix(), id);
-                                let _ = window.history().and_then(|h| {
-                                    h.replace_state_with_url(
-                                        &wasm_bindgen::JsValue::NULL,
-                                        "",
-                                        Some(&new_url),
-                                    )
-                                });
-                            }
-                        }
-                        let _ = nav;
-                    }
-                    Err(_e) => {
-                        #[cfg(target_arch = "wasm32")]
-                        web_sys::console::log_1(&format!("Failed to save results: {}", _e).into());
-                    }
-                }
-            });
         }
     });
 
@@ -367,8 +321,6 @@ pub fn ResultsPage() -> impl IntoView {
         } else {
             Some(context)
         };
-        let current_result_id = result_id.get();
-
         set_ai_description.set(None);
         set_ai_loading.set(true);
         set_ai_error.set(None);
@@ -386,28 +338,21 @@ pub fn ResultsPage() -> impl IntoView {
                 .into(),
             );
 
-            let job_id = match start_analysis(
-                prof,
-                lang_str.to_string(),
-                context_opt,
-                model_id,
-                current_result_id.clone(),
-            )
-            .await
-            {
-                Ok(id) => {
-                    #[cfg(target_arch = "wasm32")]
-                    web_sys::console::log_1(&format!("Got job_id: {}", id).into());
-                    id
-                }
-                Err(e) => {
-                    #[cfg(target_arch = "wasm32")]
-                    web_sys::console::log_1(&format!("start_analysis error: {}", e).into());
-                    set_ai_error.set(Some(e.to_string()));
-                    set_ai_loading.set(false);
-                    return;
-                }
-            };
+            let job_id =
+                match start_analysis(prof, lang_str.to_string(), context_opt, model_id).await {
+                    Ok(id) => {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(&format!("Got job_id: {}", id).into());
+                        id
+                    }
+                    Err(e) => {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(&format!("start_analysis error: {}", e).into());
+                        set_ai_error.set(Some(e.to_string()));
+                        set_ai_loading.set(false);
+                        return;
+                    }
+                };
 
             // Poll for results
             #[cfg(target_arch = "wasm32")]
@@ -446,13 +391,8 @@ pub fn ResultsPage() -> impl IntoView {
                         web_sys::console::log_1(
                             &format!("Got complete result, len={}", description.len()).into(),
                         );
-                        set_ai_description.set(Some(description.clone()));
+                        set_ai_description.set(Some(description));
                         set_ai_loading.set(false);
-
-                        // Persist to DB
-                        if let Some(rid) = current_result_id.clone() {
-                            let _ = update_saved_analysis(rid, description).await;
-                        }
                         break;
                     }
                     Ok(AnalysisStatus::Error(err)) => {
@@ -479,27 +419,58 @@ pub fn ResultsPage() -> impl IntoView {
         });
     };
 
-    // Copy link to clipboard
+    // Share: save snapshot to DB and copy link (owner), or just copy current URL (viewer)
     #[allow(unused_variables)]
-    let copy_link = move |_| {
+    let share_results = move |_| {
         #[cfg(target_arch = "wasm32")]
         {
-            if let Some(id) = result_id.get() {
+            if is_viewer.get() {
+                // Viewer: just copy current URL
                 if let Some(window) = web_sys::window() {
-                    let origin = window.location().origin().unwrap_or_default();
-                    let prefix = i18n.get_locale().path_prefix();
-                    let url = format!("{}{}/results/{}", origin, prefix, id);
-
+                    let url = window.location().href().unwrap_or_default();
                     let clipboard = window.navigator().clipboard();
                     let _ = clipboard.write_text(&url);
 
                     set_link_copied.set(true);
-                    // Reset after 2 seconds
                     spawn_local(async move {
                         gloo_timers::future::TimeoutFuture::new(2000).await;
                         set_link_copied.set(false);
                     });
                 }
+            } else {
+                // Owner: save snapshot to DB, then copy link
+                let Some(prof) = profile.get() else { return };
+                let locale = i18n.get_locale();
+                let ctx = {
+                    let c = user_context.get();
+                    if c.trim().is_empty() { None } else { Some(c) }
+                };
+                let analysis = ai_description.get();
+
+                set_share_saving.set(true);
+                spawn_local(async move {
+                    match save_results(prof, ctx, analysis, locale.code().to_string()).await {
+                        Ok(id) => {
+                            if let Some(window) = web_sys::window() {
+                                let origin = window.location().origin().unwrap_or_default();
+                                let url =
+                                    format!("{}{}/results/{}", origin, locale.path_prefix(), id);
+                                let clipboard = window.navigator().clipboard();
+                                let _ = clipboard.write_text(&url);
+                            }
+                            set_share_saving.set(false);
+                            set_link_copied.set(true);
+                            gloo_timers::future::TimeoutFuture::new(2000).await;
+                            set_link_copied.set(false);
+                        }
+                        Err(_e) => {
+                            set_share_saving.set(false);
+                            web_sys::console::log_1(
+                                &format!("Failed to save results: {}", _e).into(),
+                            );
+                        }
+                    }
+                });
             }
         }
     };
@@ -742,7 +713,7 @@ pub fn ResultsPage() -> impl IntoView {
                                             inner_html=html_content
                                         />
                                         {move || {
-                                            if is_owner.get() {
+                                            if !is_viewer.get() {
                                                 view! {
                                                     <button
                                                         on:click=move |_| set_ai_description.set(None)
@@ -837,7 +808,7 @@ pub fn ResultsPage() -> impl IntoView {
                                         </button>
                                     }
                                         .into_any()
-                                } else if is_owner.get() {
+                                } else if !is_viewer.get() {
                                     view! {
                                         <p class="no-print text-gray-600 dark:text-gray-300 mb-4">
                                             {i18n.t("results_ai_description")}
@@ -932,10 +903,11 @@ pub fn ResultsPage() -> impl IntoView {
 
                         // Actions
                         <div class="no-print flex flex-wrap gap-4">
-                            // Copy Link button
+                            // Share / Copy Link button
                             <button
-                                on:click=copy_link
-                                class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center"
+                                on:click=share_results
+                                disabled=move || share_saving.get()
+                                class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center disabled:opacity-50"
                             >
                                 {move || {
                                     if link_copied.get() {
@@ -952,7 +924,15 @@ pub fn ResultsPage() -> impl IntoView {
                                         }.into_any()
                                     }
                                 }}
-                                {move || if link_copied.get() { i18n.t("results_link_copied") } else { i18n.t("results_copy_link") }}
+                                {move || {
+                                    if link_copied.get() {
+                                        i18n.t("results_link_copied")
+                                    } else if share_saving.get() {
+                                        i18n.t("results_share_saving")
+                                    } else {
+                                        i18n.t("results_copy_link")
+                                    }
+                                }}
                             </button>
                             // Export as PDF
                             <button

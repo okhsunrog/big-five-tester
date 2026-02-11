@@ -266,6 +266,9 @@ pub fn t(locale: Locale, key: &str) -> &'static str {
         (Locale::En, "results_link_copied") => "Copied!",
         (Locale::Ru, "results_link_copied") => "Скопировано!",
 
+        (Locale::En, "results_share_saving") => "Saving...",
+        (Locale::Ru, "results_share_saving") => "Сохранение...",
+
         (Locale::En, "results_not_found") => "Results not found",
         (Locale::Ru, "results_not_found") => "Результаты не найдены",
 

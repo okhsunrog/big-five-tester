@@ -71,11 +71,12 @@ pub fn get_connection() -> Result<Connection> {
     db.connect().context("Failed to get database connection")
 }
 
-/// Save a test result to the database. Returns the UUID.
+/// Save a test result snapshot to the database.
 pub async fn save_result(
     id: &str,
     profile: &PersonalityProfile,
     user_context: Option<&str>,
+    ai_analysis: Option<&str>,
     lang: &str,
 ) -> Result<()> {
     let conn = get_connection()?;
@@ -86,8 +87,8 @@ pub async fn save_result(
         .as_secs() as i64;
 
     conn.execute(
-        "INSERT INTO results (id, profile_json, user_context, lang, created_at) VALUES (?, ?, ?, ?, ?)",
-        (id, profile_json.as_str(), user_context.unwrap_or(""), lang, now),
+        "INSERT INTO results (id, profile_json, user_context, ai_analysis, lang, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (id, profile_json.as_str(), user_context.unwrap_or(""), ai_analysis.unwrap_or(""), lang, now),
     )
     .await
     .context("Failed to insert result")?;
@@ -135,18 +136,4 @@ pub async fn get_result(id: &str) -> Result<Option<SavedResult>> {
     } else {
         Ok(None)
     }
-}
-
-/// Update the AI analysis for a saved result.
-pub async fn update_ai_analysis(id: &str, analysis: &str) -> Result<()> {
-    let conn = get_connection()?;
-
-    conn.execute(
-        "UPDATE results SET ai_analysis = ? WHERE id = ?",
-        (analysis, id),
-    )
-    .await
-    .context("Failed to update AI analysis")?;
-
-    Ok(())
 }
