@@ -6,13 +6,16 @@ A Rust + Leptos fullstack web app for taking the Big Five personality test (IPIP
 
 - **IPIP-NEO-120** scoring (5 domains, 30 facets) via `crates/bigfive`
 - **Leptos fullstack app** (`crates/bigfive-app`) with an Axum SSR backend
-- **EN/RU test UI** with progress persisted in browser `localStorage`
+- **EN/RU** localization with progress persisted in browser `localStorage`
 - **AI analysis pipeline** with:
-  - model presets from `ai_config.toml`
+  - multiple model presets from `ai_config.toml` (user-selectable in UI)
   - providers: Anthropic API and OpenAI-compatible APIs (OpenRouter/OpenAI/Ollama/etc.)
+  - adaptive thinking support (configurable effort level)
   - optional prompt-injection safeguard step
   - optional translate step when model output language != UI language
-- **Analysis archiving**: AI output is saved as Markdown into `analyses/` (configurable via `ANALYSES_DIR`)
+- **Shareable results**: save a snapshot of your scores + AI analysis to an embedded SQLite database (turso) and share via link. Each share creates an immutable snapshot with a unique URL.
+- **Export as PDF** via browser print dialog
+- **Rate limiting** with IP-based tracking (configurable per-endpoint)
 
 ## Project Structure
 
@@ -22,7 +25,6 @@ big-five-tester/
 │   ├── bigfive/        # Core library for Big Five test scoring
 │   └── bigfive-app/    # Leptos fullstack application
 ├── ai_config.toml      # AI model presets (see ai_config.example.toml)
-├── analyses/           # Saved AI analyses (Markdown)
 └── justfile            # Common dev/build/deploy commands
 ```
 
@@ -44,7 +46,7 @@ cp .env.example .env
 cp ai_config.example.toml ai_config.toml
 ```
 
-3) Run the dev server (hot reload):
+2) Run the dev server (hot reload):
 
 ```bash
 just run
@@ -68,12 +70,9 @@ Keys are read based on `api_key_env` in `ai_config.toml`. The included `.env.exa
 
 - `OPENROUTER_API_KEY` (default for OpenAI-compatible presets in `ai_config.example.toml`)
 - `ANTHROPIC_API_KEY` (if you use Anthropic presets)
-- `AI_CONFIG_PATH` (optional)
-- `ANALYSES_DIR` (optional; defaults to `analyses`)
-
-Useful for debugging:
-
-- `RUST_LOG=info` (or `debug`, etc.)
+- `AI_CONFIG_PATH` (optional; defaults to `./ai_config.toml`)
+- `DATABASE_PATH` (optional; defaults to `data/bigfive.db`)
+- `RUST_LOG` (optional; e.g. `info`, `debug`)
 
 ## Common commands
 
@@ -81,9 +80,9 @@ This repo uses `just` (see `justfile`):
 
 ```bash
 just run     # dev server (cargo leptos watch)
-just test    # cargo test
 just check   # fmt + clippy -D warnings + tests
 just build   # release build (frontend + backend)
+just deploy  # build + deploy to remote server via rsync
 ```
 
 ## Formatting
@@ -96,8 +95,6 @@ This project uses `rustfmt` and `leptosfmt`.
 cargo install --git https://github.com/bram209/leptosfmt.git
 ```
 
-The released version (0.1.33) has a bug that breaks formatting of generic components like `<I18nRoute<Locale, _, _>>`.
-
 Run formatters:
 ```bash
 cargo fmt
@@ -106,7 +103,7 @@ leptosfmt crates/bigfive-app/src/**/*.rs
 
 ## Deployment (systemd)
 
-There’s a simple deployment workflow baked into `justfile`:
+There's a simple deployment workflow baked into `justfile`:
 
 - `just deploy` builds a release and syncs `target/release/bigfive-app` + `target/site/` to a remote host
 - `bigfive.service` is copied to `/etc/systemd/system/` and the service is restarted
