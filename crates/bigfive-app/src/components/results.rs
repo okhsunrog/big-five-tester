@@ -738,7 +738,7 @@ pub fn ResultsPage() -> impl IntoView {
                                             inner_html=html_content
                                         />
                                         <button
-                                            on:click=request_ai
+                                            on:click=move |_| set_ai_description.set(None)
                                             class="no-print px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
                                         >
                                             <svg
