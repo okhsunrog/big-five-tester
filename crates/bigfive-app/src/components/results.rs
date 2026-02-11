@@ -365,6 +365,7 @@ pub fn ResultsPage() -> impl IntoView {
         };
         let current_result_id = result_id.get();
 
+        set_ai_description.set(None);
         set_ai_loading.set(true);
         set_ai_error.set(None);
 
