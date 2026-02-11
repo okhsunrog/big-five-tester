@@ -25,7 +25,6 @@ ssr = [
     "dep:toml",
     "dep:thiserror",
     "dep:tracing-subscriber",
-    "dep:chrono",
     "dep:uuid",
     "dep:axum-governor",
     "dep:lazy-limit",
@@ -56,7 +55,6 @@ pulldown-cmark = "0.13.0"
 tracing = { version = "0.1.44", features = ["log"] }
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"], optional = true }
 once_cell = "1.21.3"
-chrono = { version = "0.4.43", features = ["clock"], optional = true }
 uuid = { version = "1.20.0", features = ["v4"], optional = true }
 gloo-timers = { version = "0.3.0", features = ["futures"], optional = true }
 axum-governor = { version = "1.0.3", optional = true }

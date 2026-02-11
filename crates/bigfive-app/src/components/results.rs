@@ -139,6 +139,7 @@ pub async fn start_analysis(
     lang: String,
     user_context: Option<String>,
     model_id: String,
+    result_id: Option<String>,
 ) -> Result<String, ServerFnError> {
     use crate::jobs::{self, JobStatus};
 
@@ -176,11 +177,8 @@ pub async fn start_analysis(
                     "Background analysis completed"
                 );
 
-                // Save description to file
-                if let Err(e) =
-                    save_description_to_file(&description, &lang, user_context.as_deref())
-                {
-                    tracing::warn!("Failed to save description to file: {}", e);
+                if let Some(rid) = &result_id {
+                    tracing::info!("Results link: /{}/results/{}", lang, rid);
                 }
 
                 jobs::update_job_status(&job_id_clone, JobStatus::Complete(description));
@@ -219,55 +217,6 @@ pub async fn get_analysis_status(job_id: String) -> Result<AnalysisStatus, Serve
         }
         None => Ok(AnalysisStatus::Error("Job not found".to_string())),
     }
-}
-
-/// Save generated description to a file in the analyses directory.
-#[cfg(feature = "ssr")]
-fn save_description_to_file(
-    description: &str,
-    lang: &str,
-    user_context: Option<&str>,
-) -> std::io::Result<()> {
-    use std::fs;
-    use std::io::Write;
-    use std::path::Path;
-
-    // Get output directory from env or use default
-    let output_dir = std::env::var("ANALYSES_DIR").unwrap_or_else(|_| "analyses".to_string());
-    let dir_path = Path::new(&output_dir);
-
-    // Create directory if it doesn't exist
-    fs::create_dir_all(dir_path)?;
-
-    // Generate filename with timestamp
-    let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-    let filename = format!("{}_{}.md", timestamp, lang);
-    let file_path = dir_path.join(&filename);
-
-    // Build file content
-    let mut content = String::new();
-    content.push_str(&format!(
-        "# Personality Analysis\n\n**Generated:** {}\n**Language:** {}\n",
-        chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC"),
-        lang
-    ));
-
-    if let Some(ctx) = user_context
-        && !ctx.trim().is_empty()
-    {
-        content.push_str(&format!("\n**User Context:**\n{}\n", ctx));
-    }
-
-    content.push_str("\n---\n\n");
-    content.push_str(description);
-
-    // Write to file
-    let mut file = std::fs::File::create(&file_path)?;
-    file.write_all(content.as_bytes())?;
-
-    tracing::info!("Saved analysis to {}", file_path.display());
-
-    Ok(())
 }
 
 /// Results page with score visualization and AI-generated description.
@@ -432,21 +381,28 @@ pub fn ResultsPage() -> impl IntoView {
                 .into(),
             );
 
-            let job_id =
-                match start_analysis(prof, lang_str.to_string(), context_opt, model_id).await {
-                    Ok(id) => {
-                        #[cfg(target_arch = "wasm32")]
-                        web_sys::console::log_1(&format!("Got job_id: {}", id).into());
-                        id
-                    }
-                    Err(e) => {
-                        #[cfg(target_arch = "wasm32")]
-                        web_sys::console::log_1(&format!("start_analysis error: {}", e).into());
-                        set_ai_error.set(Some(e.to_string()));
-                        set_ai_loading.set(false);
-                        return;
-                    }
-                };
+            let job_id = match start_analysis(
+                prof,
+                lang_str.to_string(),
+                context_opt,
+                model_id,
+                current_result_id.clone(),
+            )
+            .await
+            {
+                Ok(id) => {
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::log_1(&format!("Got job_id: {}", id).into());
+                    id
+                }
+                Err(e) => {
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::log_1(&format!("start_analysis error: {}", e).into());
+                    set_ai_error.set(Some(e.to_string()));
+                    set_ai_loading.set(false);
+                    return;
+                }
+            };
 
             // Poll for results
             #[cfg(target_arch = "wasm32")]
