@@ -165,3 +165,97 @@ body {
 [data-theme="dark"] .markdown code {
   background: rgba(99, 102, 241, 0.18);
 }
+
+/* Print styles for PDF export */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-expand {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Override dark mode: white background, black text */
+  body,
+  [data-theme="dark"] {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Cards and containers */
+  .bg-white,
+  .dark\:bg-gray-800,
+  [class*="bg-gray"] {
+    background-color: white !important;
+    box-shadow: none !important;
+  }
+
+  /* Text colors */
+  .text-gray-800,
+  .text-gray-900,
+  .dark\:text-white,
+  .dark\:text-gray-100,
+  .dark\:text-gray-200,
+  .dark\:text-gray-300 {
+    color: black !important;
+  }
+
+  .text-gray-500,
+  .text-gray-600,
+  .dark\:text-gray-400 {
+    color: #4b5563 !important;
+  }
+
+  /* Ensure color bars print correctly */
+  .bg-red-500,
+  .bg-yellow-500,
+  .bg-purple-500,
+  .bg-green-500,
+  .bg-blue-500 {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Score bar backgrounds */
+  .bg-gray-200,
+  .bg-gray-100,
+  .dark\:bg-gray-600 {
+    background-color: #e5e7eb !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Markdown content */
+  .markdown {
+    color: black !important;
+  }
+
+  .markdown h1,
+  .markdown h2,
+  .markdown h3 {
+    color: black !important;
+  }
+
+  /* Remove transitions for clean print */
+  * {
+    transition: none !important;
+  }
+
+  /* Borders */
+  .border-gray-100,
+  .dark\:border-gray-700 {
+    border-color: #e5e7eb !important;
+  }
+
+  /* Spacing adjustments */
+  .max-w-4xl {
+    max-width: 100% !important;
+  }
+
+  /* Page breaks: avoid splitting domain cards */
+  .rounded-lg {
+    break-inside: avoid;
+  }
+}

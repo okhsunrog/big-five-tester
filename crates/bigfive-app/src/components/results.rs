@@ -258,7 +258,8 @@ pub fn ResultsPage() -> impl IntoView {
     Effect::new(move |_| {
         let loaded = load_profile();
         if loaded.is_none() {
-            navigate("/test", Default::default());
+            let prefix = i18n.get_locale().path_prefix();
+            navigate(&format!("{}/test", prefix), Default::default());
         } else {
             set_profile.set(loaded);
         }
@@ -467,7 +468,7 @@ pub fn ResultsPage() -> impl IntoView {
             // Header with language and theme toggles
             <header class="flex justify-between items-center mb-8">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{i18n.t("results_title")}</h1>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 no-print">
                     <LangToggle />
                     <ThemeToggle />
                 </div>
@@ -525,7 +526,7 @@ pub fn ResultsPage() -> impl IntoView {
                                                 <svg
                                                     class=move || {
                                                         format!(
-                                                            "w-5 h-5 ml-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 {}",
+                                                            "no-print w-5 h-5 ml-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 {}",
                                                             if is_expanded() { "rotate-180" } else { "" },
                                                         )
                                                     }
@@ -545,7 +546,7 @@ pub fn ResultsPage() -> impl IntoView {
                                             // Facets (collapsible)
                                             <div class=move || {
                                                 format!(
-                                                    "overflow-hidden transition-all duration-300 {}",
+                                                    "print-expand overflow-hidden transition-all duration-300 {}",
                                                     if is_expanded() { "max-h-96" } else { "max-h-0" },
                                                 )
                                             }>
@@ -602,7 +603,7 @@ pub fn ResultsPage() -> impl IntoView {
                                         />
                                         <button
                                             on:click=request_ai
-                                            class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
+                                            class="no-print px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
                                         >
                                             <svg
                                                 class="w-4 h-4 mr-2"
@@ -623,7 +624,7 @@ pub fn ResultsPage() -> impl IntoView {
                                         .into_any()
                                 } else if ai_loading.get() {
                                     view! {
-                                        <div class="py-12">
+                                        <div class="no-print py-12">
                                             // Animated AI icon
                                             <div class="flex justify-center mb-6">
                                                 <div class="relative">
@@ -676,13 +677,13 @@ pub fn ResultsPage() -> impl IntoView {
                                         .into_any()
                                 } else if let Some(error) = ai_error.get() {
                                     view! {
-                                        <div class="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-4 rounded-lg mb-4">
+                                        <div class="no-print bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-4 rounded-lg mb-4">
                                             <p class="font-medium">{i18n.t("results_ai_error")}</p>
                                             <p class="text-sm mt-1">{error}</p>
                                         </div>
                                         <button
                                             on:click=request_ai
-                                            class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+                                            class="no-print px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
                                         >
                                             {i18n.t("results_ai_retry")}
                                         </button>
@@ -690,12 +691,12 @@ pub fn ResultsPage() -> impl IntoView {
                                         .into_any()
                                 } else {
                                     view! {
-                                        <p class="text-gray-600 dark:text-gray-300 mb-4">
+                                        <p class="no-print text-gray-600 dark:text-gray-300 mb-4">
                                             {i18n.t("results_ai_description")}
                                         </p>
 
                                         // Optional user context
-                                        <div class="mb-6">
+                                        <div class="no-print mb-6">
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                 {i18n.t("results_context_label")}
                                                 <span class="text-gray-400 dark:text-gray-500 font-normal ml-1">
@@ -719,7 +720,7 @@ pub fn ResultsPage() -> impl IntoView {
                                         </div>
 
                                         // Model selector
-                                        <div class="mb-6">
+                                        <div class="no-print mb-6">
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                 {i18n.t("results_model_select")}
                                             </label>
@@ -750,7 +751,7 @@ pub fn ResultsPage() -> impl IntoView {
 
                                         <button
                                             on:click=request_ai
-                                            class="px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white font-medium rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center"
+                                            class="no-print px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white font-medium rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center"
                                         >
                                             <svg
                                                 class="w-5 h-5 mr-2"
@@ -774,15 +775,36 @@ pub fn ResultsPage() -> impl IntoView {
                         </div>
 
                         // Actions
-                        <div class="flex flex-wrap gap-4">
+                        <div class="no-print flex flex-wrap gap-4">
+                            <button
+                                on:click=move |_| {
+                                    #[cfg(target_arch = "wasm32")]
+                                    {
+                                        if let Some(window) = web_sys::window() {
+                                            let _ = window.print();
+                                        }
+                                    }
+                                }
+                                class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center"
+                            >
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                                    />
+                                </svg>
+                                {i18n.t("results_export_pdf")}
+                            </button>
                             <A
-                                href="/test"
+                                href=move || format!("{}/test", i18n.get_locale().path_prefix())
                                 attr:class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
                                 {i18n.t("results_retake")}
                             </A>
                             <A
-                                href="/"
+                                href=move || i18n.get_locale().path_prefix().to_string()
                                 attr:class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
                                 {i18n.t("results_home")}

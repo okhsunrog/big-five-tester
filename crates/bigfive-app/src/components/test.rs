@@ -96,6 +96,7 @@ pub fn TestPage() -> impl IntoView {
         let inv = inventory.get();
         let ans = answers.get();
         let nav = navigate.clone();
+        let locale = i18n.get_locale();
 
         async move {
             let answer_vec: Vec<Answer> = inv
@@ -114,7 +115,10 @@ pub fn TestPage() -> impl IntoView {
                     Ok(profile) => {
                         save_profile(&profile);
                         clear_test_progress();
-                        nav("results", Default::default());
+                        nav(
+                            &format!("{}/results", locale.path_prefix()),
+                            Default::default(),
+                        );
                     }
                     Err(e) => {
                         leptos::logging::error!("Failed to calculate profile: {}", e);

@@ -257,6 +257,9 @@ pub fn t(locale: Locale, key: &str) -> &'static str {
         (Locale::En, "results_home") => "Back to Home",
         (Locale::Ru, "results_home") => "На главную",
 
+        (Locale::En, "results_export_pdf") => "Export as PDF",
+        (Locale::Ru, "results_export_pdf") => "Экспорт в PDF",
+
         // Score levels
         (Locale::En, "level_low") => "Low",
         (Locale::Ru, "level_low") => "Низкий",
