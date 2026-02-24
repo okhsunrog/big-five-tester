@@ -62,7 +62,7 @@ real = { version = "0.1.4", features = ["axum"], optional = true }
 tower = { version = "0.5.3", optional = true }
 turso = { version = "0.4.4", optional = true }
 anyhow = { version = "1.0.101", optional = true }
-llm-relay = { version = "0.2.0", path = "../../../llm-relay", features = ["client"], optional = true }
+llm-relay = { version = "0.2.0", features = ["client"], optional = true }
 
 [build-dependencies]
 chrono = "0.4.43"
