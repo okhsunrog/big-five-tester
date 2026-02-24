@@ -21,7 +21,6 @@ ssr = [
     "dep:axum",
     "dep:tokio",
     "dep:dotenvy",
-    "dep:reqwest",
     "dep:toml",
     "dep:thiserror",
     "dep:tracing-subscriber",
@@ -32,6 +31,7 @@ ssr = [
     "dep:tower",
     "dep:turso",
     "dep:anyhow",
+    "dep:llm-relay",
 ]
 
 [dependencies]
@@ -43,7 +43,6 @@ leptos_axum = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 dotenvy = { workspace = true, optional = true }
-reqwest = { workspace = true, optional = true }
 toml = { version = "0.8", optional = true }
 thiserror = { version = "2", optional = true }
 serde = { workspace = true }
@@ -63,6 +62,7 @@ real = { version = "0.1.4", features = ["axum"], optional = true }
 tower = { version = "0.5.3", optional = true }
 turso = { version = "0.4.4", optional = true }
 anyhow = { version = "1.0.101", optional = true }
+llm-relay = { version = "0.1.0", path = "../../../llm-relay", features = ["client"], optional = true }
 
 [build-dependencies]
 chrono = "0.4.43"
